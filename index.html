@@ -307,9 +307,76 @@
     *{animation-duration:.001ms !important;transition-duration:.001ms !important}
     .cursor-blink{animation:none}
   }
+
+  /* ============================ WELCOME (first visit) ============================ */
+  .welcome-overlay{
+    position:fixed; inset:0; z-index:1000;
+    display:grid; place-items:center; padding:24px;
+    background:color-mix(in srgb, var(--paper) 80%, transparent);
+    backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
+    animation:wl-fade .4s ease;
+  }
+  .welcome-overlay.hide{ display:none; }
+  .welcome-overlay.closing{ opacity:0; transition:opacity .3s ease; pointer-events:none; }
+  .welcome-card{
+    max-width:560px; width:100%;
+    background:linear-gradient(var(--paper-2),var(--paper));
+    border:1px solid var(--line-strong); border-radius:18px;
+    box-shadow:var(--shadow); padding:40px 40px 32px; text-align:center;
+    animation:wl-rise .55s cubic-bezier(.2,.7,.2,1);
+  }
+  .welcome-seal{
+    width:64px;height:64px;border-radius:13px;background:var(--seal);color:#fff;
+    display:grid;place-items:center;font-family:var(--font-serif);font-size:36px;line-height:1;
+    margin:0 auto 20px;transform:rotate(-3deg);position:relative;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.25),var(--shadow);
+  }
+  .welcome-seal::after{content:"";position:absolute;inset:5px;border:1px solid rgba(255,255,255,.35);border-radius:8px;}
+  .welcome-kicker{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;}
+  .welcome-card h2{font-family:var(--font-mono);font-weight:600;font-size:25px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 16px;color:var(--ink);}
+  .welcome-card h2 .dot{color:var(--vermilion);}
+  .welcome-lead{font-family:var(--font-serif);font-size:16.5px;line-height:1.6;color:var(--ink-2);max-width:42ch;margin:0 auto 24px;}
+  .welcome-points{display:flex;flex-direction:column;gap:12px;text-align:left;max-width:410px;margin:0 auto 24px;}
+  .welcome-point{display:flex;gap:13px;align-items:flex-start;font-family:var(--font-serif);font-size:14.5px;line-height:1.5;color:var(--ink-2);}
+  .welcome-point b{color:var(--ink);}
+  .welcome-point code{font-family:var(--font-mono);font-size:.84em;background:color-mix(in srgb,var(--indigo) 14%,var(--paper-3));color:var(--indigo);padding:1px 5px;border-radius:4px;}
+  .welcome-point .wp-ic{flex:none;width:24px;height:24px;border-radius:7px;background:color-mix(in srgb,var(--jade) 16%,transparent);color:var(--jade);display:grid;place-items:center;font-family:var(--font-serif);font-size:13px;margin-top:1px;}
+  .welcome-belts{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:26px;}
+  .welcome-belts i{display:block;width:24px;height:9px;border-radius:2px;border:1px solid rgba(0,0,0,.22);box-shadow:inset 0 -3px 0 rgba(0,0,0,.13);}
+  .welcome-actions{display:flex;flex-direction:column;gap:14px;align-items:center;}
+  .welcome-begin{
+    appearance:none;cursor:pointer;font-family:var(--font-mono);font-size:14px;letter-spacing:.06em;
+    padding:13px 32px;border-radius:11px;border:1px solid var(--indigo);background:var(--indigo);color:#fff;
+    display:inline-flex;align-items:center;gap:10px;transition:.15s;
+  }
+  .welcome-begin:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .welcome-begin:focus-visible{outline:2px solid var(--indigo);outline-offset:3px;}
+  .welcome-skip{appearance:none;background:none;border:none;cursor:pointer;font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;color:var(--ink-3);text-decoration:underline;text-underline-offset:3px;padding:2px;}
+  .welcome-skip:hover{color:var(--ink);}
+  @keyframes wl-fade{from{opacity:0}to{opacity:1}}
+  @keyframes wl-rise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+  @media (max-width:520px){ .welcome-card{padding:30px 22px 26px;} .welcome-card h2{font-size:21px;} .welcome-lead{font-size:15.5px;} }
 </style>
 </head>
 <body>
+<div class="welcome-overlay" id="welcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="welcome-card">
+    <div class="welcome-seal" aria-hidden="true">道</div>
+    <div class="welcome-kicker">Enter the</div>
+    <h2 id="welcomeTitle">Terminal Dojo<span class="dot">.</span></h2>
+    <p class="welcome-lead">Learn the Linux command line the way it's meant to be learned — by doing. A real shell, running safely in your browser.</p>
+    <div class="welcome-points">
+      <div class="welcome-point"><span class="wp-ic" aria-hidden="true">型</span><span><b>54 guided kata</b> — from <code>pwd</code> to pipes, loops, and redirection. Each one checks the real command you type.</span></div>
+      <div class="welcome-point"><span class="wp-ic" aria-hidden="true">帯</span><span>Earn <b>16 belts</b>, white through black, as you master each technique.</span></div>
+      <div class="welcome-point"><span class="wp-ic" aria-hidden="true">安</span><span>A safe sandbox — an in-memory filesystem that never touches your real machine.</span></div>
+    </div>
+    <div class="welcome-belts" id="welcomeBelts" aria-hidden="true"></div>
+    <div class="welcome-actions">
+      <button class="welcome-begin" id="welcomeBegin" type="button">Begin training <span aria-hidden="true">→</span></button>
+      <button class="welcome-skip" id="welcomeSkip" type="button">Skip — I know my way around</button>
+    </div>
+  </div>
+</div>
 <div class="app">
   <header class="lintel">
     <div class="seal" aria-hidden="true">道</div>
@@ -2580,7 +2647,32 @@ function init(){
   initTheme();
   initResetAll();
   renderBelts(); renderKataList(); renderBrief(); renderRank();
-  bootSequence();
+  initWelcome();   // shows the first-visit overlay; boots the terminal on "Begin" (or immediately for returning students)
+}
+
+const WELCOME_KEY="terminal-dojo-welcomed-v1";
+function initWelcome(){
+  const ov=document.getElementById("welcomeOverlay");
+  const strip=document.getElementById("welcomeBelts");
+  if(strip) strip.innerHTML=BELTS.map(b=>'<i style="background:'+b.color+'"></i>').join("");
+  let seen=false;
+  try{ seen=localStorage.getItem(WELCOME_KEY)==="1"; }catch(e){}
+  if(!ov || seen){ if(ov) ov.classList.add("hide"); bootSequence(); return; }
+  const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  let done=false;
+  const dismiss=()=>{
+    if(done) return; done=true;
+    try{ localStorage.setItem(WELCOME_KEY,"1"); }catch(e){}
+    ov.classList.add("closing");
+    setTimeout(()=>{ ov.classList.add("hide"); bootSequence(); }, reduce?0:300);
+  };
+  const begin=document.getElementById("welcomeBegin");
+  const skip=document.getElementById("welcomeSkip");
+  if(begin){ begin.addEventListener("click",dismiss); }
+  if(skip){ skip.addEventListener("click",dismiss); }
+  ov.addEventListener("click",e=>{ if(e.target===ov) dismiss(); });
+  document.addEventListener("keydown",e=>{ if(!done && e.key==="Escape") dismiss(); });
+  if(begin) begin.focus();
 }
 init();
 
