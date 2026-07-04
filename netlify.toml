@@ -1,0 +1,10 @@
+[build]
+  # Static site — no build step. Serve the repo root as-is.
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

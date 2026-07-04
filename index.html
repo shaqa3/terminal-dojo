@@ -1,0 +1,2591 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Terminal Dojo — learn Linux hands-on through 54 belt-ranked kata in a real in-browser shell sandbox.">
+<title>Terminal Dojo</title>
+<style>
+  /* ============================ TOKENS ============================ */
+  :root{
+    --paper:#EFEAE0; --paper-2:#F5F1E8; --paper-3:#E7E1D4;
+    --ink:#20242B; --ink-2:#4A515C; --ink-3:#79808C;
+    --line:#D8D2C4; --line-strong:#C6BFAD;
+    --indigo:#3A4FB8; --indigo-soft:#5468d6;
+    --jade:#0E9E6A; --amber:#B87A16; --vermilion:#D6482C;
+    --seal:#C63B23;
+    --shadow:0 1px 2px rgba(30,26,20,.06),0 8px 28px rgba(30,26,20,.10);
+    --font-mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+    --font-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#12151C; --paper-2:#171B24; --paper-3:#1E2431;
+      --ink:#DCE3EC; --ink-2:#98A2B0; --ink-3:#69727F;
+      --line:#28303C; --line-strong:#333c4a;
+      --indigo:#8AA0FF; --indigo-soft:#7488f0;
+      --jade:#46E0A6; --amber:#E6B34A; --vermilion:#F0603F;
+      --seal:#E14A30;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.45);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#EFEAE0; --paper-2:#F5F1E8; --paper-3:#E7E1D4;
+    --ink:#20242B; --ink-2:#4A515C; --ink-3:#79808C;
+    --line:#D8D2C4; --line-strong:#C6BFAD;
+    --indigo:#3A4FB8; --indigo-soft:#5468d6;
+    --jade:#0E9E6A; --amber:#B87A16; --vermilion:#D6482C; --seal:#C63B23;
+    --shadow:0 1px 2px rgba(30,26,20,.06),0 8px 28px rgba(30,26,20,.10);
+    color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --paper:#12151C; --paper-2:#171B24; --paper-3:#1E2431;
+    --ink:#DCE3EC; --ink-2:#98A2B0; --ink-3:#69727F;
+    --line:#28303C; --line-strong:#333c4a;
+    --indigo:#8AA0FF; --indigo-soft:#7488f0;
+    --jade:#46E0A6; --amber:#E6B34A; --vermilion:#F0603F; --seal:#E14A30;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.45);
+    color-scheme:dark;
+  }
+
+  /* Terminal screen — committed to its own dark world in both themes */
+  :root{
+    --scr-bg:#0B0E13; --scr-bg2:#0F131A; --scr-fg:#C6D3D0; --scr-dim:#6C7A82;
+    --scr-jade:#4FE6AB; --scr-amber:#F0C05A; --scr-red:#FF6A4D; --scr-blue:#8FB2FF;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-serif);
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    overflow:hidden;
+  }
+  ::selection{background:color-mix(in srgb,var(--indigo) 35%,transparent)}
+
+  .app{
+    height:100vh; display:grid;
+    grid-template-rows:auto 1fr;
+    max-width:1500px; margin:0 auto;
+  }
+
+  /* ============================ LINTEL (header) ============================ */
+  .lintel{
+    display:flex; align-items:center; gap:18px;
+    padding:14px 22px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(var(--paper-2),var(--paper));
+  }
+  .seal{
+    flex:none; width:46px; height:46px; border-radius:9px;
+    background:var(--seal); color:#fff;
+    display:grid; place-items:center;
+    font-family:var(--font-serif); font-size:26px; line-height:1;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.25), var(--shadow);
+    transform:rotate(-3deg);
+    position:relative;
+  }
+  .seal::after{content:"";position:absolute;inset:4px;border:1px solid rgba(255,255,255,.35);border-radius:5px}
+  .brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .brand h1{
+    margin:0; font-family:var(--font-mono); font-weight:600;
+    font-size:20px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink); white-space:nowrap;
+  }
+  .brand h1 .dot{color:var(--vermilion)}
+  .brand .tag{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  .lintel-right{margin-left:auto; display:flex; align-items:center; gap:16px}
+  .rank{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .rank .lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+  .rank .val{font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .rank .swatch{width:26px;height:11px;border-radius:2px;border:1px solid rgba(0,0,0,.25);box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+  .icon-btn{
+    appearance:none;border:1px solid var(--line-strong);background:var(--paper-2);
+    color:var(--ink-2);border-radius:8px;width:36px;height:36px;cursor:pointer;
+    font-size:15px;display:grid;place-items:center;transition:.15s;
+  }
+  .icon-btn:hover{color:var(--ink);border-color:var(--indigo)}
+  .icon-btn:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+
+  /* ============================ MAIN ============================ */
+  .main{
+    display:grid; grid-template-columns:minmax(320px,420px) 1fr;
+    min-height:0; gap:0;
+  }
+  .scroll{
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0;
+    background:
+      linear-gradient(var(--paper),var(--paper));
+  }
+
+  /* Belt progression rail */
+  .belts{padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+  .belts h2{margin:0 0 12px;font-family:var(--font-mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .belt-track{display:flex;flex-direction:column;gap:3px}
+  .belt-row{display:flex;align-items:center;gap:10px}
+  .belt-chip{
+    flex:none;width:34px;height:14px;border-radius:3px;
+    border:1px solid rgba(0,0,0,.28);
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,.13);
+    opacity:.34;transition:.3s;
+  }
+  .belt-row.reached .belt-chip{opacity:1}
+  .belt-row .belt-name{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;color:var(--ink-3);text-transform:capitalize}
+  .belt-row.reached .belt-name{color:var(--ink)}
+  .belt-row .belt-prog{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .belt-row.current .belt-name{color:var(--indigo);font-weight:600}
+  .belt-row.current::after{content:"◂";color:var(--indigo);font-size:11px}
+
+  /* Lesson list */
+  .kata-list{overflow-y:auto;flex:1;min-height:0;padding:8px 12px 20px}
+  .kata-list h2{margin:14px 8px 8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .kata{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:9px 10px;border-radius:8px;cursor:pointer;
+    border:1px solid transparent;transition:.12s;
+  }
+  .kata:hover{background:var(--paper-2)}
+  .kata.active{background:var(--paper-2);border-color:var(--line-strong)}
+  .kata.locked{cursor:not-allowed;opacity:.42}
+  .kata .mark{
+    flex:none;width:20px;height:20px;border-radius:50%;
+    border:1.5px solid var(--line-strong);
+    display:grid;place-items:center;font-size:11px;margin-top:1px;
+    font-family:var(--font-mono);color:var(--ink-3);
+  }
+  .kata.done .mark{background:var(--jade);border-color:var(--jade);color:#04150E}
+  .kata.active .mark{border-color:var(--indigo);color:var(--indigo)}
+  .kata .k-body{min-width:0}
+  .kata .k-title{font-family:var(--font-mono);font-size:12.5px;color:var(--ink);letter-spacing:.02em}
+  .kata.locked .k-title{color:var(--ink-3)}
+  .kata .k-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-3);margin-top:2px}
+
+  /* ============================ LESSON PANEL (bottom of scroll would overflow) ============================ */
+  /* Instead lesson brief sits in its own scrollable region below list via layout swap on wide screens */
+
+  /* ============================ TRAINING FLOOR ============================ */
+  .floor{display:flex;flex-direction:column;min-height:0;background:var(--paper-3)}
+  .brief{
+    padding:18px 24px 16px;border-bottom:1px solid var(--line);
+    background:linear-gradient(var(--paper-2),var(--paper));
+    max-height:42%; overflow-y:auto;
+  }
+  .brief .b-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .belt-tag{
+    font-family:var(--font-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+    padding:3px 9px;border-radius:20px;color:#fff;font-weight:600;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);
+  }
+  .brief h2{margin:0;font-family:var(--font-serif);font-size:23px;font-weight:600;color:var(--ink);letter-spacing:-.01em;text-wrap:balance}
+  .brief .prose{font-family:var(--font-serif);font-size:15.5px;line-height:1.62;color:var(--ink-2);max-width:62ch;margin:10px 0 0}
+  .brief .prose code{
+    font-family:var(--font-mono);font-size:.86em;
+    background:color-mix(in srgb,var(--indigo) 14%,var(--paper-3));
+    color:var(--indigo);padding:1px 6px;border-radius:5px;
+  }
+  .brief .prose strong{color:var(--ink)}
+  .task{
+    display:flex;align-items:flex-start;gap:12px;margin-top:16px;
+    padding:13px 15px;border-radius:10px;
+    background:var(--paper-3);border:1px solid var(--line-strong);
+    border-left:3px solid var(--indigo);
+  }
+  .task .t-icon{font-family:var(--font-mono);color:var(--indigo);font-size:13px;margin-top:1px}
+  .task .t-body{min-width:0}
+  .task .t-lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
+  .task .t-text{font-family:var(--font-mono);font-size:13.5px;line-height:1.5;color:var(--ink)}
+  .task .t-text b{color:var(--indigo);font-weight:600}
+  .brief-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .btn{
+    appearance:none;cursor:pointer;font-family:var(--font-mono);
+    font-size:11.5px;letter-spacing:.05em;padding:7px 13px;border-radius:7px;
+    border:1px solid var(--line-strong);background:var(--paper-2);color:var(--ink-2);transition:.13s;
+  }
+  .btn:hover{color:var(--ink);border-color:var(--ink-3)}
+  .btn:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+  .btn.hint:hover{border-color:var(--amber);color:var(--amber)}
+  .btn.primary{background:var(--indigo);border-color:var(--indigo);color:#fff}
+  .btn.primary:hover{filter:brightness(1.08);color:#fff}
+  .hint-box{
+    margin-top:12px;padding:11px 14px;border-radius:9px;
+    border:1px dashed var(--amber);
+    background:color-mix(in srgb,var(--amber) 12%,transparent);
+    font-family:var(--font-mono);font-size:12.5px;line-height:1.55;color:var(--ink);
+    display:none;
+  }
+  .hint-box.show{display:block}
+  .hint-box b{color:var(--amber)}
+
+  /* Terminal window */
+  .term-wrap{flex:1;min-height:0;padding:16px 20px 20px;display:flex}
+  .term{
+    flex:1;min-height:0;display:flex;flex-direction:column;
+    background:var(--scr-bg);border-radius:12px;overflow:hidden;
+    box-shadow:var(--shadow),inset 0 0 0 1px rgba(255,255,255,.04);
+    border:1px solid #05070a;
+  }
+  .term-bar{
+    display:flex;align-items:center;gap:8px;padding:10px 14px;
+    background:var(--scr-bg2);border-bottom:1px solid #05070a;
+  }
+  .term-bar .dots{display:flex;gap:6px}
+  .term-bar .dots i{width:11px;height:11px;border-radius:50%;display:block}
+  .dots i:nth-child(1){background:#FF5F57}.dots i:nth-child(2){background:#FEBC2E}.dots i:nth-child(3){background:#28C840}
+  .term-bar .title{margin:0 auto;font-family:var(--font-mono);font-size:11px;color:var(--scr-dim);letter-spacing:.04em;transform:translateX(-16px)}
+  .term-body{
+    flex:1;min-height:0;overflow-y:auto;padding:14px 16px;
+    font-family:var(--font-mono);font-size:13.5px;line-height:1.55;
+    color:var(--scr-fg);
+  }
+  .term-body::-webkit-scrollbar{width:10px}
+  .term-body::-webkit-scrollbar-thumb{background:#20272f;border-radius:6px;border:2px solid var(--scr-bg)}
+  .line{white-space:pre-wrap;word-break:break-word}
+  .l-prompt{color:var(--scr-jade)}
+  .l-path{color:var(--scr-blue)}
+  .l-cmd{color:var(--scr-fg)}
+  .l-err{color:var(--scr-red)}
+  .l-dim{color:var(--scr-dim)}
+  .l-dir{color:var(--scr-blue);font-weight:600}
+  .l-ok{color:var(--scr-jade)}
+  .l-amber{color:var(--scr-amber)}
+  .l-match{color:var(--scr-amber);font-weight:600}
+  .inputline{display:flex;align-items:baseline;gap:0;font-family:var(--font-mono);font-size:13.5px}
+  .inputline .ps1{white-space:pre;flex:none}
+  .cmd-input{
+    flex:1;background:transparent;border:none;outline:none;color:var(--scr-fg);
+    font-family:var(--font-mono);font-size:13.5px;caret-color:var(--scr-jade);padding:0;
+  }
+  .cursor-blink{display:inline-block;width:8px;height:15px;background:var(--scr-jade);
+    vertical-align:text-bottom;animation:blink 1.05s steps(1) infinite;margin-left:1px}
+  @keyframes blink{50%{opacity:0}}
+
+  /* success celebration */
+  .celebrate{
+    position:absolute;left:50%;top:12px;transform:translateX(-50%);
+    background:var(--jade);color:#04150E;font-family:var(--font-mono);
+    font-size:12.5px;letter-spacing:.04em;font-weight:600;
+    padding:9px 18px;border-radius:24px;box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:8px;z-index:20;
+    opacity:0;pointer-events:none;transition:.3s;
+  }
+  .celebrate.show{opacity:1;transform:translateX(-50%) translateY(4px)}
+  .floor{position:relative}
+
+  .term.flash{animation:flash .5s ease}
+  @keyframes flash{0%,100%{box-shadow:var(--shadow),inset 0 0 0 1px rgba(255,255,255,.04)}
+    35%{box-shadow:0 0 0 3px var(--jade),inset 0 0 40px rgba(79,230,171,.18)}}
+
+  .completed-banner{
+    margin-top:14px;padding:14px 16px;border-radius:10px;
+    background:color-mix(in srgb,var(--jade) 16%,transparent);
+    border:1px solid var(--jade);display:none;align-items:center;gap:12px;
+  }
+  .completed-banner.show{display:flex}
+  .completed-banner .cb-txt{font-family:var(--font-mono);font-size:12.5px;color:var(--ink);line-height:1.5}
+  .completed-banner .cb-txt b{color:var(--jade)}
+
+  /* Final scroll (dojo graduation) */
+  .final-note{font-family:var(--font-serif);font-style:italic;color:var(--ink-2);font-size:14px;margin-top:8px}
+
+  @media (max-width:900px){
+    body{overflow:auto}
+    .app{height:auto}
+    .main{grid-template-columns:1fr}
+    .scroll{border-right:none;border-bottom:1px solid var(--line)}
+    .kata-list{max-height:280px}
+    .brief{max-height:none}
+    .term-wrap{height:60vh}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+    .cursor-blink{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="lintel">
+    <div class="seal" aria-hidden="true">道</div>
+    <div class="brand">
+      <h1>Terminal Dojo<span class="dot">.</span></h1>
+      <span class="tag">Guided&nbsp;Linux&nbsp;Kata</span>
+    </div>
+    <div class="lintel-right">
+      <div class="rank">
+        <span class="lbl">Rank</span>
+        <span class="val"><span class="swatch" id="rankSwatch"></span><span id="rankName">White belt</span></span>
+      </div>
+      <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+      <button class="icon-btn" id="resetAllBtn" title="Reset all progress" aria-label="Reset all progress">⟲</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <aside class="scroll">
+      <div class="belts">
+        <h2>The Path of Belts</h2>
+        <div class="belt-track" id="beltTrack"></div>
+      </div>
+      <nav class="kata-list" id="kataList" aria-label="Lessons"></nav>
+    </aside>
+
+    <section class="floor">
+      <div class="celebrate" id="celebrate">✓ Kata passed</div>
+      <div class="brief" id="brief"><!-- lesson brief injected --></div>
+      <div class="term-wrap">
+        <div class="term" id="term">
+          <div class="term-bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="title">student@dojo — training floor</span>
+          </div>
+          <div class="term-body" id="termBody" tabindex="0">
+            <div class="inputline" id="inputLine">
+              <span class="ps1" id="ps1"></span>
+              <input class="cmd-input" id="cmdInput" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================================================================
+   IN-MEMORY FILESYSTEM
+   =================================================================== */
+const HOME = "/home/student";
+let root; // {type,children} tree
+
+function newDir(){ return {type:"dir", children:{}}; }
+function newFile(c){ return {type:"file", content:c==null?"":c}; }
+
+function resolve(cwd, p){
+  if(p==null||p==="") return cwd;
+  if(p==="~") p=HOME;
+  else if(p.startsWith("~/")) p=HOME+p.slice(1);
+  let parts = p.startsWith("/") ? [] : cwd.split("/").filter(Boolean);
+  for(const seg of p.split("/")){
+    if(seg===""||seg===".") continue;
+    if(seg===".."){ parts.pop(); }
+    else parts.push(seg);
+  }
+  return "/"+parts.join("/");
+}
+function getNode(path){
+  if(path==="/"||path==="") return root;
+  const parts=path.split("/").filter(Boolean);
+  let n=root;
+  for(const seg of parts){
+    if(!n||n.type!=="dir"||!n.children[seg]) return null;
+    n=n.children[seg];
+  }
+  return n;
+}
+function deref(node){ let n=node,g=0; while(n&&n.type==="link"&&g++<40){ n=getNode(n.targetAbs); } return n; }
+function parentOf(path){
+  const parts=path.split("/").filter(Boolean);
+  const name=parts.pop();
+  const par=getNode("/"+parts.join("/"));
+  return {par,name};
+}
+function mkdirp(path){
+  const parts=path.split("/").filter(Boolean);
+  let n=root;
+  for(const seg of parts){
+    if(!n.children[seg]) n.children[seg]=newDir();
+    n=n.children[seg];
+    if(n.type!=="dir") return null;
+  }
+  return n;
+}
+function writeFile(path,content){
+  const {par,name}=parentOf(path);
+  if(!par||par.type!=="dir") return false;
+  par.children[name]=newFile(content);
+  return true;
+}
+
+/* Seed the home directory fresh */
+function seedFS(){
+  root=newDir();
+  mkdirp(HOME);
+  mkdirp(HOME+"/projects");
+  mkdirp(HOME+"/dojo");
+  writeFile(HOME+"/README.txt",
+    "Welcome to the Terminal Dojo.\nHere you learn the way of the shell by doing.\nEvery kata is a real command. Bow in, and begin.\n");
+}
+
+/* Convenience for lesson checks: resolve relative to HOME */
+function H(p){ return getNode(resolve(HOME,p)); }
+
+/* ===================================================================
+   COMMAND PARSING + EXECUTION (real-ish shell)
+   =================================================================== */
+let cwd = HOME;
+
+/* live process / job table (mutable) */
+let JOBS=[]; let nextPid=1743;
+function registerJob(cmd){ const job={pid:nextPid++, cmd:cmd.trim().replace(/\s*&\s*$/,""), state:"Running", start:"09:10"}; JOBS.push(job); return job; }
+function runningJobs(){ return JOBS.filter(j=>j.state==="Running"); }
+
+/* environment variables */
+let ENV={
+  USER:"student", HOME:HOME, SHELL:"/bin/bash", PWD:HOME,
+  PATH:"/usr/local/bin:/usr/bin:/bin", LANG:"en_US.UTF-8", TERM:"xterm-256color",
+  DOJO:"terminal-dojo"
+};
+function readVar(str,i){ // str[i] === '$'
+  if(str[i+1]==="{"){ let j=i+2,name=""; while(j<str.length&&str[j]!=="}"){name+=str[j];j++;} return [ENV[name]!=null?ENV[name]:"", j]; }
+  let j=i+1,name="";
+  while(j<str.length&&/[A-Za-z0-9_]/.test(str[j])){ name+=str[j]; j++; }
+  if(name==="") return ["$", i];
+  return [ENV[name]!=null?ENV[name]:"", j-1];
+}
+function readParen(str,start){ // str[start] is first char after "$("
+  let depth=1,j=start,inner="";
+  while(j<str.length){
+    const ch=str[j];
+    if(ch==="(") depth++;
+    else if(ch===")"){ depth--; if(depth===0) break; }
+    inner+=ch; j++;
+  }
+  return [inner, j]; // j at the matching ')'
+}
+function runCmdSub(inner){
+  try{ const r=runLine(inner.trim()); return r.plain!=null ? r.plain : stripTags(r.html||""); }
+  catch(e){ return ""; }
+}
+function substFmt(text, inDquotes){
+  let t=String(text).replace(/\n+$/,"");           // strip trailing newlines, like bash
+  if(!inDquotes) t=t.replace(/\s*\n\s*/g," ");      // unquoted: collapse remaining newlines to spaces
+  return t;
+}
+function readArith(str,i){ // str[i..i+2] === "$(("
+  let j=i+3,pdepth=0,inner="";
+  while(j<str.length){
+    const ch=str[j];
+    if(ch==="("){ pdepth++; inner+=ch; j++; continue; }
+    if(ch===")"){ if(pdepth>0){ pdepth--; inner+=ch; j++; continue; } break; }
+    inner+=ch; j++;
+  }
+  return [inner, j+1]; // j at first ')' of closing '))'; last consumed = j+1
+}
+function arithParse(s){
+  let pos=0;
+  const skip=()=>{ while(pos<s.length&&s[pos]===" ")pos++; };
+  const peek=()=>s[pos];
+  function factor(){ skip(); if(peek()==="("){pos++;const v=expr();skip();if(peek()===")")pos++;return v;} if(peek()==="-"){pos++;return -factor();} if(peek()==="+"){pos++;return factor();} let n=""; while(pos<s.length&&/[0-9]/.test(s[pos]))n+=s[pos++]; return n===""?0:parseInt(n,10); }
+  function term(){ let v=factor(); skip(); while(peek()==="*"||peek()==="/"||peek()==="%"){ const op=s[pos++]; const r=factor(); v= op==="*"?v*r: op==="/"?(r===0?0:Math.trunc(v/r)) : (r===0?0:v%r); skip(); } return v; }
+  function expr(){ let v=term(); skip(); while(peek()==="+"||peek()==="-"){ const op=s[pos++]; const r=term(); v= op==="+"?v+r:v-r; skip(); } return v; }
+  return expr();
+}
+function evalArith(exprStr){
+  const e=String(exprStr).replace(/\$?([A-Za-z_]\w*)/g,(m,name)=>{ const n=parseInt(ENV[name],10); return isNaN(n)?"0":String(n); });
+  if(!/^[\d\s+\-*/%()]*$/.test(e)) return "0";
+  try{ return String(arithParse(e)); }catch(_){ return "0"; }
+}
+function expandVars(str){
+  ENV.PWD=cwd; ENV.HOME=HOME;
+  let out="",q=null;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(q==="'"){ out+=c; if(c==="'")q=null; continue; }
+    // arithmetic expansion $(( ... ))  — check before $( command substitution
+    if(c==="$" && str[i+1]==="(" && str[i+2]==="("){ const ar=readArith(str,i); out+=evalArith(ar[0]); i=ar[1]; continue; }
+    // command substitution $( ... ) — active unquoted and inside double quotes
+    if(c==="$" && str[i+1]==="("){ const pr=readParen(str,i+2); out+=substFmt(runCmdSub(pr[0]), q==='"'); i=pr[1]; continue; }
+    if(c==="`"){ let end=str.indexOf("`",i+1); if(end<0)end=str.length; out+=substFmt(runCmdSub(str.slice(i+1,end)), q==='"'); i=end; continue; }
+    if(q==='"'){ if(c==='"'){q=null;out+=c;continue;} if(c==="$"){const r=readVar(str,i);out+=r[0];i=r[1];continue;} out+=c; continue; }
+    if(c==="'"){ q="'"; out+=c; continue; }
+    if(c==='"'){ q='"'; out+=c; continue; }
+    if(c==="$"){ const r=readVar(str,i); out+=r[0]; i=r[1]; continue; }
+    out+=c;
+  }
+  return out;
+}
+
+function tokenize(str){
+  const out=[]; let cur=""; let q=null; let has=false;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(q){
+      if(c===q){q=null;} else cur+=c;
+      continue;
+    }
+    if(c==='"'||c==="'"){q=c;has=true;continue;}
+    if(c===" "||c==="\t"){ if(has||cur!==""){out.push(cur);cur="";has=false;} continue; }
+    cur+=c; has=true;
+  }
+  if(has||cur!=="") out.push(cur);
+  return out;
+}
+
+/* tokenize but remember whether each token had glob chars OUTSIDE quotes */
+function tokenizeArgs(str){
+  const out=[]; let cur="",has=false,q=null,glob=false;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(q){ if(c===q){q=null;} else cur+=c; continue; }
+    if(c==='"'||c==="'"){ q=c; has=true; continue; }
+    if(c===" "||c==="\t"){ if(has||cur!==""){out.push({text:cur,glob});cur="";has=false;glob=false;} continue; }
+    if(c==="*"||c==="?") glob=true;
+    cur+=c; has=true;
+  }
+  if(has||cur!=="") out.push({text:cur,glob});
+  return out;
+}
+
+/* filename generation — expand a glob pattern (last path segment) against the FS */
+function globMatch(pattern){
+  const slash=pattern.lastIndexOf("/");
+  const dirPart = slash>=0 ? pattern.slice(0,slash) : ".";
+  const pat = slash>=0 ? pattern.slice(slash+1) : pattern;
+  if(!/[*?]/.test(pat)) return [pattern];
+  const dirNode=getNode(resolve(cwd,dirPart));
+  if(!dirNode||dirNode.type!=="dir") return [];
+  const rx=new RegExp("^"+pat.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*/g,"[^/]*").replace(/\?/g,"[^/]")+"$");
+  const names=Object.keys(dirNode.children).filter(n=>!n.startsWith(".")&&rx.test(n)).sort();
+  return names.map(n=> slash>=0 ? dirPart+"/"+n : n);
+}
+function expandGlobs(rawToks){
+  const toks=[];
+  for(const tk of rawToks){
+    if(tk.glob){ const m=globMatch(tk.text); if(m.length) toks.push(...m); else toks.push(tk.text); }
+    else toks.push(tk.text);
+  }
+  return toks;
+}
+
+function fmtPerms(node){
+  if(node.type==="link") return "lrwxrwxrwx";
+  const m = node.mode!=null ? node.mode : (node.type==="dir"?0o755:0o644);
+  const typ = node.type==="dir"?"d":"-";
+  const bits=(n)=> ((n&4)?"r":"-")+((n&2)?"w":"-")+((n&1)?"x":"-");
+  return typ+bits((m>>6)&7)+bits((m>>3)&7)+bits(m&7);
+}
+function pad(s,n){ s=String(s); return s.length>=n?s:s+" ".repeat(n-s.length); }
+function padL(s,n){ s=String(s); return s.length>=n?s:" ".repeat(n-s.length)+s; }
+
+const MAN={
+  pwd:"pwd — print name of current/working directory",
+  ls:"ls — list directory contents. Flags: -l (long), -a (all, incl. hidden), -1 (one per line)",
+  cd:"cd — change the working directory. Use 'cd ..' to go up, 'cd ~' for home",
+  cat:"cat — concatenate and print file contents",
+  echo:"echo — display a line of text. Use > to write to a file, >> to append",
+  mkdir:"mkdir — make directories. Flag: -p (create parents as needed)",
+  touch:"touch — create an empty file (or update its timestamp)",
+  rm:"rm — remove files or directories. Flags: -r (recursive), -f (force)",
+  cp:"cp — copy files. Flag: -r (recursive, for directories)",
+  mv:"mv — move or rename files and directories",
+  grep:"grep — search text for lines matching a pattern. Flags: -i, -n, -c, -v",
+  wc:"wc — count lines, words, and bytes. Flags: -l, -w, -c",
+  head:"head — output the first part of a file. Flag: -n N",
+  tail:"tail — output the last part of a file. Flag: -n N",
+  find:"find — search for files in a directory tree. Use -name PATTERN",
+  clear:"clear — clear the terminal screen",
+  whoami:"whoami — print the current user name",
+  curl:"curl — transfer data from a URL. -s (silent), -O (save as remote name), -o FILE, -I (headers only)",
+  ln:"ln — make links between files. -s creates a symbolic link:  ln -s target linkname",
+  du:"du — estimate file space usage. -s (summary total), -h (human-readable sizes)",
+  df:"df — report filesystem disk space usage. -h (human-readable sizes)",
+  ps:"ps — report a snapshot of current processes. Try  ps  or  ps aux",
+  tar:"tar — archive files. Create: tar -cf a.tar files;  gzip too: -czf a.tar.gz;  list: -tf;  extract: -xf",
+  gzip:"gzip — compress a file to FILE.gz (removes the original). -d decompress, -k keep original",
+  gunzip:"gunzip — decompress a FILE.gz back to FILE (same as gzip -d)",
+  sleep:"sleep — wait for a number of seconds. Append & to run it in the background",
+  jobs:"jobs — list background jobs started from this shell",
+  kill:"kill — send a signal to a process. kill PID or kill %job;  kill -9 forces it",
+  jq:"jq — parse and query JSON. e.g. jq '.belts',  jq '.belts[0]',  jq '.belts | length',  jq -r for raw output",
+  export:"export — set an environment variable:  export NAME=value  (also NAME=value on its own)",
+  env:"env — print all environment variables and their values",
+  unset:"unset — remove an environment variable:  unset NAME",
+  test:"test — evaluate a condition, setting the exit status. e.g. test -f file,  test \"$X\" = yes  (also [ ... ])",
+  "true":"true — do nothing, successfully (exit status 0)",
+  "false":"false — do nothing, unsuccessfully (exit status 1)",
+  date:"date — print the current date and time",
+  "for":"for — loop over a list:  for VAR in item1 item2 …; do COMMANDS; done  (globs like *.txt expand into the list)",
+  "if":"if — run commands conditionally:  if COND; then COMMANDS; [else COMMANDS;] fi",
+  "while":"while — repeat while a condition holds:  while COND; do COMMANDS; done",
+  sort:"sort — sort lines of text. Flags: -r (reverse), -n (numeric), -u (unique)",
+  uniq:"uniq — filter adjacent repeated lines. Flags: -c (count), -d (dups only), -u (unique only)",
+  cut:"cut — select portions of each line. -d DELIM -f FIELDS, or -c CHARS",
+  tr:"tr — translate or delete characters. e.g. tr 'a-z' 'A-Z',  tr -d '0-9'",
+  sed:"sed — stream editor. Substitute with s/old/new/g; delete lines with /re/d",
+  awk:"awk — field extraction and scanning. e.g. awk '{print $1}',  awk -F, '{print $2}'",
+  xargs:"xargs — build command lines from input. e.g. find . -name '*.log' | xargs wc -l",
+  chmod:"chmod — change file permissions. e.g. chmod +x file,  chmod 755 file",
+  history:"history — show the command history",
+  help:"help — list the commands available in this dojo",
+  man:"man — display a short manual page for a command"
+};
+
+/* A tiny offline "web" — real curl reaches the internet; this dojo is sandboxed,
+   so a fixed set of practice URLs is served locally. */
+const WEB={
+  "https://dojo.test/scroll.txt":{type:"text/plain",body:
+    "The scroll of the shell:\n  Small tools, joined by pipes, defeat large problems.\n  Read before you write. Measure before you cut.\n  The terminal rewards the patient hand.\n"},
+  "https://dojo.test/motd":{type:"text/plain",body:"Welcome, student. The dojo network is open.\n"},
+  "https://dojo.test/server.log":{type:"text/plain",body:seedLogText()},
+  "https://api.dojo.test/belts.json":{type:"application/json",body:
+    '{"belts":["white","yellow","orange","green","blue","gold","purple","brown","slate","red","rose","teal","indigo","cyan","steel","black"]}\n'},
+};
+function hostOf(url){ return url.replace(/^[a-z]+:\/\//i,"").split("/")[0]; }
+function humanSize(b){
+  if(b<1024) return b+"B";
+  if(b<1024*1024) return (b/1024).toFixed(b<10240?1:0).replace(/\.0$/,"")+"K";
+  return (b/1048576).toFixed(1)+"M";
+}
+
+// each command: fn(args, stdin) -> {out, err}
+const CMDS={
+  pwd(){ return {out:cwd+"\n",err:""}; },
+
+  whoami(){ return {out:"student\n",err:""}; },
+
+  echo(args){ return {out:args.join(" ")+"\n",err:""}; },
+
+  help(){
+    const names=Object.keys(MAN).sort().join("  ");
+    return {out:"Commands available in the dojo:\n"+names+"\n\nType  man <command>  for a short description.\n",err:""};
+  },
+
+  man(args){
+    if(!args[0]) return {out:"What manual page do you want?\n",err:""};
+    const m=MAN[args[0]];
+    return m?{out:m+"\n",err:""}:{out:"",err:"No manual entry for "+args[0]+"\n"};
+  },
+
+  clear(){ return {out:"",err:"",clear:true}; },
+
+  ls(args){
+    let long=false,all=false,one=false,targets=[];
+    for(const a of args){
+      if(a.startsWith("-")&&a!=="-"){
+        for(const ch of a.slice(1)){
+          if(ch==="l")long=true; else if(ch==="a")all=true; else if(ch==="1")one=true;
+        }
+      } else targets.push(a);
+    }
+    if(targets.length===0) targets=["."];
+    let out="";
+    const blocks=[];
+    for(const t of targets){
+      const path=resolve(cwd,t);
+      const node=getNode(path);
+      if(!node){ blocks.push({err:"ls: cannot access '"+t+"': No such file or directory\n"}); continue; }
+      let names;
+      if(node.type==="dir"){
+        names=Object.keys(node.children);
+        if(all) names=[".",".."].concat(names);
+        names.sort((a,b)=>a.replace(/^\./,"").localeCompare(b.replace(/^\./,"")));
+        if(!all) names=names.filter(n=>!n.startsWith("."));
+      } else {
+        names=[t];
+      }
+      const getChild=(nm)=> nm==="."?node : nm===".."?node : (node.type==="dir"?node.children[nm]:node);
+      let block="";
+      if(long){
+        if(node.type==="dir") block+="total "+names.length+"\n";
+        for(const nm of names){
+          const ch=getChild(nm)||newFile("");
+          const isdir=ch.type==="dir";
+          const islink=ch.type==="link";
+          const size= isdir?4096:(islink?(ch.target?ch.target.length:0):(ch.content?ch.content.length:0));
+          const disp= isdir?'<span class="l-dir">'+esc(nm)+"</span>"
+            : islink?'<span class="l-amber">'+esc(nm)+"</span> -&gt; "+esc(ch.target)
+            : esc(nm);
+          block+=fmtPerms(ch)+" 1 student student "+padL(size,5)+" Jul  4 09:00 "+disp+"\n";
+        }
+      } else {
+        const styled=names.map(nm=>{
+          const ch=getChild(nm);
+          if(ch&&ch.type==="dir") return '<span class="l-dir">'+esc(nm)+"</span>";
+          if(ch&&ch.type==="link") return '<span class="l-amber">'+esc(nm)+"</span>";
+          return esc(nm);
+        });
+        block+= one? styled.join("\n")+"\n" : styled.join("   ")+"\n";
+      }
+      blocks.push({out:block});
+    }
+    return {out:blocks.map(b=>b.out||"").join(""),err:blocks.map(b=>b.err||"").join(""),raw:true};
+  },
+
+  cd(args){
+    const t=args[0]||"~";
+    let path=resolve(cwd,t);
+    let node=getNode(path);
+    if(node&&node.type==="link"){ path=node.targetAbs; node=getNode(path); }
+    if(!node) return {out:"",err:"cd: no such file or directory: "+t+"\n"};
+    if(node.type!=="dir") return {out:"",err:"cd: not a directory: "+t+"\n"};
+    cwd=path;
+    return {out:"",err:""};
+  },
+
+  cat(args,stdin){
+    if(args.length===0){ return {out:stdin||"",err:""}; }
+    let out="",err="";
+    for(const t of args){
+      let node=getNode(resolve(cwd,t));
+      if(node&&node.type==="link") node=getNode(node.targetAbs);
+      if(!node){err+="cat: "+t+": No such file or directory\n";continue;}
+      if(node.type==="dir"){err+="cat: "+t+": Is a directory\n";continue;}
+      if(node.tar){err+="cat: "+t+": is a tar archive — run 'tar -xf "+t+"' to unpack it\n";continue;}
+      if(node.gz){err+="cat: "+t+": compressed data — run 'gunzip "+t+"' first\n";continue;}
+      out+=node.content;
+    }
+    return {out,err};
+  },
+
+  mkdir(args){
+    let p=false,dirs=[];
+    for(const a of args){ if(a==="-p")p=true; else if(a.startsWith("-")){} else dirs.push(a); }
+    if(dirs.length===0) return {out:"",err:"mkdir: missing operand\n"};
+    let err="";
+    for(const d of dirs){
+      const path=resolve(cwd,d);
+      if(getNode(path)){ if(!p) err+="mkdir: cannot create directory '"+d+"': File exists\n"; continue; }
+      const {par}=parentOf(path);
+      if(!par && !p){ err+="mkdir: cannot create directory '"+d+"': No such file or directory\n"; continue; }
+      if(p) mkdirp(path); else { const{par:pp,name}=parentOf(path); if(!pp){err+="mkdir: cannot create directory '"+d+"': No such file or directory\n";continue;} pp.children[name]=newDir(); }
+    }
+    return {out:"",err};
+  },
+
+  touch(args){
+    if(args.length===0) return {out:"",err:"touch: missing file operand\n"};
+    let err="";
+    for(const f of args){
+      const path=resolve(cwd,f);
+      const {par,name}=parentOf(path);
+      if(!par){err+="touch: cannot touch '"+f+"': No such file or directory\n";continue;}
+      if(!par.children[name]) par.children[name]=newFile("");
+    }
+    return {out:"",err};
+  },
+
+  rm(args){
+    let r=false,f=false,targets=[];
+    for(const a of args){
+      if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="r"||ch==="R")r=true;if(ch==="f")f=true;}}
+      else targets.push(a);
+    }
+    if(targets.length===0) return {out:"",err:f?"":"rm: missing operand\n"};
+    let err="";
+    for(const t of targets){
+      const path=resolve(cwd,t);
+      const node=getNode(path);
+      if(!node){ if(!f) err+="rm: cannot remove '"+t+"': No such file or directory\n"; continue; }
+      if(node.type==="dir"&&!r){ err+="rm: cannot remove '"+t+"': Is a directory\n"; continue; }
+      const {par,name}=parentOf(path);
+      if(par) delete par.children[name];
+    }
+    return {out:"",err};
+  },
+
+  cp(args){
+    let r=false,ops=[];
+    for(const a of args){ if(a.startsWith("-")&&a!=="-"){if(a.includes("r")||a.includes("R"))r=true;} else ops.push(a); }
+    if(ops.length<2) return {out:"",err:"cp: missing destination file operand\n"};
+    const dst=ops.pop();
+    const dstPath=resolve(cwd,dst);
+    const dstNode=getNode(dstPath);
+    let err="";
+    for(const src of ops){
+      const srcPath=resolve(cwd,src);
+      const srcNode=getNode(srcPath);
+      if(!srcNode){err+="cp: cannot stat '"+src+"': No such file or directory\n";continue;}
+      if(srcNode.type==="dir"&&!r){err+="cp: -r not specified; omitting directory '"+src+"'\n";continue;}
+      const clone=JSON.parse(JSON.stringify(srcNode));
+      if(dstNode&&dstNode.type==="dir"){
+        const base=srcPath.split("/").pop();
+        dstNode.children[base]=clone;
+      } else {
+        const {par,name}=parentOf(dstPath);
+        if(!par){err+="cp: cannot create '"+dst+"': No such file or directory\n";continue;}
+        par.children[name]=clone;
+      }
+    }
+    return {out:"",err};
+  },
+
+  mv(args){
+    const ops=args.filter(a=>!(a.startsWith("-")&&a!=="-"));
+    if(ops.length<2) return {out:"",err:"mv: missing destination file operand\n"};
+    const dst=ops.pop();
+    const dstPath=resolve(cwd,dst);
+    const dstNode=getNode(dstPath);
+    let err="";
+    for(const src of ops){
+      const srcPath=resolve(cwd,src);
+      const srcNode=getNode(srcPath);
+      if(!srcNode){err+="mv: cannot stat '"+src+"': No such file or directory\n";continue;}
+      const {par:spar,name:sname}=parentOf(srcPath);
+      if(dstNode&&dstNode.type==="dir"){
+        dstNode.children[sname]=srcNode;
+      } else {
+        const {par,name}=parentOf(dstPath);
+        if(!par){err+="mv: cannot move '"+src+"': No such file or directory\n";continue;}
+        par.children[name]=srcNode;
+      }
+      if(spar) delete spar.children[sname];
+    }
+    return {out:"",err};
+  },
+
+  grep(args,stdin){
+    let i=false,n=false,c=false,v=false,pattern=null,files=[];
+    for(const a of args){
+      if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="i")i=true;else if(ch==="n")n=true;else if(ch==="c")c=true;else if(ch==="v")v=true;}}
+      else if(pattern===null) pattern=a;
+      else files.push(a);
+    }
+    if(pattern===null) return {out:"",err:"usage: grep [-icnv] pattern [file ...]\n"};
+    const rx=new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),i?"i":"");
+    const sources=[];
+    if(files.length){
+      for(const f of files){
+        const node=deref(getNode(resolve(cwd,f)));
+        if(!node){return {out:"",err:"grep: "+f+": No such file or directory\n"};}
+        if(node.type==="dir"){return {out:"",err:"grep: "+f+": Is a directory\n"};}
+        sources.push({name:f,text:node.content||""});
+      }
+    } else {
+      sources.push({name:null,text:stdin||""});
+    }
+    const multi=files.length>1;
+    let out="",count=0;
+    for(const s of sources){
+      const lines=s.text.split("\n");
+      // drop trailing empty from split of text ending in \n
+      if(lines.length&&lines[lines.length-1]==="") lines.pop();
+      lines.forEach((line,idx)=>{
+        const m=rx.test(line);
+        if(m!==v){
+          count++;
+          if(!c){
+            let prefix="";
+            if(multi) prefix+= s.name+":";
+            if(n) prefix+=(idx+1)+":";
+            const hl= v?esc(line): esc(line).replace(rx,m=>'<span class="l-match">'+m+"</span>");
+            out+=prefix+hl+"\n";
+          }
+        }
+      });
+    }
+    if(c) out=String(count)+"\n";
+    return {out,err:"",raw:true,code: count>0?0:1};
+  },
+
+  wc(args,stdin){
+    let l=false,w=false,c=false,files=[];
+    for(const a of args){
+      if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="l")l=true;else if(ch==="w")w=true;else if(ch==="c")c=true;}}
+      else files.push(a);
+    }
+    const showAll=!l&&!w&&!c;
+    const measure=(text)=>{
+      const nl=(text.match(/\n/g)||[]).length;
+      const words=text.trim()===""?0:text.trim().split(/\s+/).length;
+      const bytes=text.length;
+      return {nl,words,bytes};
+    };
+    let out="",err="";
+    const emit=(m,label)=>{
+      let parts=[];
+      if(l||showAll)parts.push(padL(m.nl,3));
+      if(w||showAll)parts.push(padL(m.words,3));
+      if(c||showAll)parts.push(padL(m.bytes,3));
+      out+=parts.join(" ")+(label?" "+label:"")+"\n";
+    };
+    if(files.length){
+      const tot={nl:0,words:0,bytes:0}; let count=0;
+      for(const f of files){
+        const node=deref(getNode(resolve(cwd,f)));
+        if(!node){err+="wc: "+f+": No such file or directory\n";continue;}
+        if(node.type==="dir"){err+="wc: "+f+": Is a directory\n";continue;}
+        const m=measure(node.content||"");
+        emit(m,f); tot.nl+=m.nl; tot.words+=m.words; tot.bytes+=m.bytes; count++;
+      }
+      if(count>1) emit(tot,"total");
+    } else {
+      emit(measure(stdin||""),"");
+    }
+    return {out,err};
+  },
+
+  head(args,stdin){
+    let n=10,files=[];
+    for(let i=0;i<args.length;i++){
+      const a=args[i];
+      if(a==="-n"){n=parseInt(args[++i],10)||10;}
+      else if(/^-\d+$/.test(a)){n=parseInt(a.slice(1),10);}
+      else files.push(a);
+    }
+    const take=(t)=>{const ls=t.split("\n"); const end=ls[ls.length-1]===""?ls.length-1:ls.length; return ls.slice(0,Math.min(n,end)).join("\n")+"\n";};
+    if(files.length){
+      let out="",err="";
+      for(const f of files){const node=deref(getNode(resolve(cwd,f)));if(!node){err+="head: cannot open '"+f+"'\n";continue;}out+=take(node.content||"");}
+      return {out,err};
+    }
+    return {out:take(stdin||""),err:""};
+  },
+
+  tail(args,stdin){
+    let n=10,files=[];
+    for(let i=0;i<args.length;i++){
+      const a=args[i];
+      if(a==="-n"){n=parseInt(args[++i],10)||10;}
+      else if(/^-\d+$/.test(a)){n=parseInt(a.slice(1),10);}
+      else files.push(a);
+    }
+    const take=(t)=>{let ls=t.split("\n"); if(ls[ls.length-1]==="")ls.pop(); return ls.slice(-n).join("\n")+"\n";};
+    if(files.length){
+      let out="",err="";
+      for(const f of files){const node=deref(getNode(resolve(cwd,f)));if(!node){err+="tail: cannot open '"+f+"'\n";continue;}out+=take(node.content||"");}
+      return {out,err};
+    }
+    return {out:take(stdin||""),err:""};
+  },
+
+  find(args){
+    let start=".",name=null;
+    for(let i=0;i<args.length;i++){
+      if(args[i]==="-name"){name=args[++i];}
+      else if(!args[i].startsWith("-")) start=args[i];
+    }
+    const startPath=resolve(cwd,start);
+    const node=getNode(startPath);
+    if(!node) return {out:"",err:"find: '"+start+"': No such file or directory\n"};
+    const rx= name? new RegExp("^"+name.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*/g,".*").replace(/\?/g,".")+"$") : null;
+    let out="";
+    const baseName=startPath.split("/").filter(Boolean).pop()||"";
+    if(!rx || rx.test(baseName)) out+=start+"\n";
+    if(node.type==="dir"){for(const k of Object.keys(node.children)){walkFind(node.children[k],start.replace(/\/$/,"")+"/"+k,k,rx,(s)=>out+=s);}}
+    return {out,err:""};
+  },
+
+  curl(args){
+    let silent=false,headOnly=false,outFile=null,saveRemote=false,url=null;
+    for(let i=0;i<args.length;i++){
+      const a=args[i];
+      if(a==="--silent") silent=true;
+      else if(a==="--head") headOnly=true;
+      else if(a==="--location"){}
+      else if(a==="--remote-name") saveRemote=true;
+      else if(a==="-o"){ outFile=args[++i]; }
+      else if(a==="-H"||a==="-X"||a==="-d"||a==="-A"){ i++; }
+      else if(/^-[sILO]+$/.test(a)){ for(const ch of a.slice(1)){ if(ch==="s")silent=true; else if(ch==="I")headOnly=true; else if(ch==="O")saveRemote=true; } }
+      else if(a.startsWith("-")){ /* ignore other flags */ }
+      else url=a;
+    }
+    if(!url) return {out:"",err:"curl: no URL specified\n"};
+    if(!/^[a-z]+:\/\//i.test(url)) url="https://"+url;
+    const res = WEB[url] || WEB[url.replace(/\/$/,"")];
+    if(!res) return {out:"", err: silent?"" : "curl: (6) Could not resolve host: "+hostOf(url)+"\n"};
+    if(headOnly) return {out:"HTTP/1.1 200 OK\ncontent-type: "+(res.type||"text/plain")+"\ncontent-length: "+res.body.length+"\n\n", err:""};
+    if(saveRemote||outFile){
+      const fname = outFile || url.split("/").pop() || "index.html";
+      writeFile(resolve(cwd,fname),res.body);
+      return {out:"", err: silent?"" : ""};
+    }
+    return {out:res.body,err:""};
+  },
+
+  ln(args){
+    let sym=false,ops=[];
+    for(const a of args){ if(a.startsWith("-")&&a!=="-"){ if(a.includes("s"))sym=true; } else ops.push(a); }
+    if(ops.length<1) return {out:"",err:"ln: missing file operand\n"};
+    const target=ops[0];
+    const linkName=ops[1]|| target.split("/").pop();
+    const linkPath=resolve(cwd,linkName);
+    const {par,name}=parentOf(linkPath);
+    if(!par) return {out:"",err:"ln: failed to create link '"+linkName+"': No such file or directory\n"};
+    if(sym){
+      par.children[name]={type:"link", target:target, targetAbs:resolve(cwd,target)};
+    } else {
+      const tnode=getNode(resolve(cwd,target));
+      if(!tnode) return {out:"",err:"ln: failed to access '"+target+"': No such file or directory\n"};
+      par.children[name]=tnode;
+    }
+    return {out:"",err:""};
+  },
+
+  du(args){
+    let s=false,h=false,paths=[];
+    for(const a of args){ if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="s")s=true;if(ch==="h")h=true;}} else paths.push(a); }
+    const start=paths[0]||".";
+    const startPath=resolve(cwd,start);
+    const node=getNode(startPath);
+    if(!node) return {out:"",err:"du: cannot access '"+start+"': No such file or directory\n"};
+    const sizeOf=(n)=> n.type==="file"?(n.content?n.content.length:0) : n.type==="link"?0 : Object.keys(n.children).reduce((a,k)=>a+sizeOf(n.children[k]),0);
+    const fmt=(b)=> h? humanSize(b) : String(Math.max(1,Math.ceil(b/1024)));
+    let out="";
+    const walk=(n,path)=>{
+      if(n.type!=="dir"){ out+=fmt(sizeOf(n))+"\t"+path+"\n"; return; }
+      if(!s){ for(const k of Object.keys(n.children)){ if(n.children[k].type==="dir") walk(n.children[k],path.replace(/\/$/,"")+"/"+k); } }
+      out+=fmt(sizeOf(n))+"\t"+path+"\n";
+    };
+    if(s&&node.type==="dir"){ out=fmt(sizeOf(node))+"\t"+start+"\n"; }
+    else walk(node,start);
+    return {out,err:""};
+  },
+
+  df(args){
+    const h=args.some(a=>a.startsWith("-")&&a.includes("h"));
+    if(h) return {out:
+      "Filesystem      Size  Used Avail Use% Mounted on\n"+
+      "dojofs          1.0G  128M  896M  13% /\n"+
+      "tmpfs           256M  1.2M  255M   1% /tmp\n", err:""};
+    return {out:
+      "Filesystem     1K-blocks    Used Available Use% Mounted on\n"+
+      "dojofs           1048576  131072    917504  13% /\n"+
+      "tmpfs             262144    1228    260916   1% /tmp\n", err:""};
+  },
+
+  ps(args){
+    const flags=args.join("");
+    const base=[
+      {u:"student",pid:1,cpu:"0.0",mem:"0.1",vsz:4280,rss:3320,stat:"Ss",start:"09:00",time:"0:00",cmd:"-bash",t2:"00:00:00",c2:"bash"},
+      {u:"student",pid:42,cpu:"0.1",mem:"0.4",vsz:21850,rss:9100,stat:"S",start:"09:01",time:"0:01",cmd:"dojo --lesson",t2:"00:00:01",c2:"dojo"},
+    ];
+    const jobRows=JOBS.filter(j=>j.state==="Running").map(j=>({u:"student",pid:j.pid,cpu:"0.0",mem:"0.1",vsz:5120,rss:2100,stat:"S",start:j.start,time:"0:00",cmd:j.cmd,t2:"00:00:00",c2:j.cmd.split(/\s+/)[0]}));
+    const all=base.concat(jobRows);
+    if(flags.includes("aux")||(flags.includes("a")&&flags.includes("u"))){
+      let out="USER      PID %CPU %MEM    VSZ   RSS TTY   STAT START   TIME COMMAND\n";
+      all.forEach(p=>{ out+= pad(p.u,9)+padL(p.pid,4)+"  "+p.cpu+"  "+p.mem+" "+padL(p.vsz,6)+" "+padL(p.rss,5)+" pts/0 "+pad(p.stat,4)+" "+p.start+" "+padL(p.time,5)+" "+p.cmd+"\n"; });
+      out+= pad("student",9)+padL(nextPid,4)+"  0.0  0.1   3990  1980 pts/0 R+   09:15  0:00 ps aux\n";
+      return {out,err:""};
+    }
+    let out="  PID TTY          TIME CMD\n";
+    all.forEach(p=>{ out+= padL(p.pid,5)+" pts/0    "+p.t2+" "+p.c2+"\n"; });
+    out+= padL(nextPid,5)+" pts/0    00:00:00 ps\n";
+    return {out,err:""};
+  },
+
+  export(args){
+    let out="";
+    if(args.length===0){ for(const k of Object.keys(ENV)) out+='declare -x '+k+'="'+ENV[k]+'"\n'; return {out,err:""}; }
+    for(const a of args){
+      const eq=a.indexOf("=");
+      if(eq>=0){ ENV[a.slice(0,eq)]=a.slice(eq+1); }
+      // export NAME (no =) just marks an existing var exported — no-op here
+    }
+    return {out:"",err:""};
+  },
+
+  env(){
+    let out="";
+    for(const k of Object.keys(ENV)) out+=k+"="+ENV[k]+"\n";
+    return {out,err:""};
+  },
+
+  unset(args){ for(const a of args) delete ENV[a]; return {out:"",err:""}; },
+
+  "true"(){ return {out:"",err:"",code:0}; },
+  "false"(){ return {out:"",err:"",code:1}; },
+
+  date(){ return {out:"Sat Jul  4 09:15:00 UTC 2026\n",err:""}; },
+
+  test(args){
+    let a=args.slice();
+    if(a[a.length-1]==="]") a=a.slice(0,-1); // invoked as [ ... ]
+    let ok=false;
+    if(a.length===2){
+      const op=a[0], x=a[1];
+      if(op==="-f"){ const n=getNode(resolve(cwd,x)); ok=!!n&&n.type==="file"; }
+      else if(op==="-d"){ const n=getNode(resolve(cwd,x)); ok=!!n&&n.type==="dir"; }
+      else if(op==="-e"){ ok=!!getNode(resolve(cwd,x)); }
+      else if(op==="-z"){ ok=x.length===0; }
+      else if(op==="-n"){ ok=x.length>0; }
+    } else if(a.length===3){
+      const x=a[0], op=a[1], y=a[2];
+      if(op==="=")      ok=x===y;
+      else if(op==="!=")ok=x!==y;
+      else if(op==="-eq")ok=(+x)===(+y);
+      else if(op==="-ne")ok=(+x)!==(+y);
+      else if(op==="-lt")ok=(+x)<(+y);
+      else if(op==="-gt")ok=(+x)>(+y);
+      else if(op==="-le")ok=(+x)<=(+y);
+      else if(op==="-ge")ok=(+x)>=(+y);
+    } else if(a.length===1){ ok=a[0].length>0; }
+    return {out:"",err:"",code: ok?0:1};
+  },
+
+  "["(args){ return CMDS.test(args); },
+
+  sleep(){ return {out:"",err:""}; },
+
+  jobs(){
+    const running=runningJobs();
+    const terminated=JOBS.filter(j=>j.state==="Terminated");
+    let out="";
+    running.forEach((j,i)=>{
+      const mark = i===running.length-1?"+" : i===running.length-2?"-" : " ";
+      out+="["+(i+1)+"]"+mark+"  "+pad("Running",24)+j.cmd+" &\n";
+    });
+    terminated.forEach((j,i)=>{
+      out+="["+(running.length+i+1)+"]   "+pad("Terminated",24)+j.cmd+" &\n";
+    });
+    JOBS=running; // reap terminated after reporting them once
+    return {out,err:""};
+  },
+
+  kill(args){
+    let targets=[];
+    for(const a of args){ if(a.startsWith("-")){ /* signal spec, ignored in sandbox */ } else targets.push(a); }
+    if(!targets.length) return {out:"",err:"kill: usage: kill [-signal] pid | %job\n"};
+    let err="";
+    for(const t of targets){
+      let job;
+      if(t.startsWith("%")){ const running=runningJobs(); job=running[parseInt(t.slice(1),10)-1]; }
+      else job=JOBS.find(j=>j.pid===parseInt(t,10)&&j.state==="Running");
+      if(!job){ err+="kill: ("+t+") - No such process\n"; continue; }
+      job.state="Terminated";
+    }
+    return {out:"",err};
+  },
+
+  jq(args,stdin){
+    let raw=false, filter=null, files=[];
+    for(const a of args){
+      if(a==="-r"||a==="--raw-output") raw=true;
+      else if(a==="-c"||a==="--compact-output"){}
+      else if(a.startsWith("-")&&a!=="-"){ if(a.includes("r"))raw=true; }
+      else if(filter===null) filter=a;
+      else files.push(a);
+    }
+    if(filter===null) filter=".";
+    let text="";
+    if(files.length){ const nd=deref(getNode(resolve(cwd,files[0]))); if(!nd){return {out:"",err:"jq: error: Could not open file "+files[0]+"\n"};} if(nd.type==="file")text=nd.content||""; }
+    else text=stdin||"";
+    let data; try{ data=JSON.parse(text); }catch(e){ return {out:"",err:"jq: error: could not parse JSON input\n"}; }
+    const steps=filter.split("|").map(s=>s.trim()).filter(Boolean);
+    let cur=[data];
+    for(const step of steps){ let next=[]; for(const v of cur) next.push(...jqStep(step,v)); cur=next; }
+    const fmt=(v)=> (raw && typeof v==="string") ? v : JSON.stringify(v,null,2);
+    return {out: cur.map(fmt).join("\n")+(cur.length?"\n":""), err:""};
+  },
+
+  tar(args){
+    let rest=args.slice();
+    let flagStr="";
+    while(rest.length && /^-[cxtzvf]+$/.test(rest[0])) flagStr+=rest.shift().replace(/^-/,"");
+    if(flagStr==="" && rest.length && /^[cxtzvf]+$/.test(rest[0])) flagStr=rest.shift();
+    if(!flagStr) return {out:"",err:"tar: need one of -c, -x, or -t (with -f archive)\n"};
+    const create=flagStr.includes("c"), extract=flagStr.includes("x"), list=flagStr.includes("t");
+    const gz=flagStr.includes("z"), verbose=flagStr.includes("v");
+    let archive=null;
+    if(flagStr.includes("f")) archive=rest.shift();
+    if(!archive) return {out:"",err:"tar: no archive name given (use -f NAME)\n"};
+    const members=rest;
+    let out="",err="";
+    if(create){
+      const entries=[];
+      const addNode=(node,rel)=>{
+        if(node.type==="dir"){ entries.push({name:rel+"/",type:"dir",mode:node.mode});
+          for(const k of Object.keys(node.children)) addNode(node.children[k],rel+"/"+k); }
+        else if(node.type==="link"){ entries.push({name:rel,type:"link",target:node.target,targetAbs:node.targetAbs}); }
+        else entries.push({name:rel,type:"file",content:node.content,mode:node.mode,gz:node.gz});
+      };
+      for(const m of members){ const n=getNode(resolve(cwd,m)); if(!n){err+="tar: "+m+": Cannot stat: No such file or directory\n";continue;} addNode(n,m.replace(/\/+$/,"")); }
+      const {par,name}=parentOf(resolve(cwd,archive));
+      if(!par) return {out:"",err:"tar: "+archive+": Cannot open: No such file or directory\n"};
+      par.children[name]={type:"file",content:entries.map(e=>e.content||"").join(""),tar:entries,gz:gz};
+      if(verbose) out=entries.map(e=>e.name).join("\n")+"\n";
+      return {out,err};
+    }
+    const arch=getNode(resolve(cwd,archive));
+    if(!arch||!arch.tar) return {out:"",err:"tar: "+archive+": not a tar archive\n"};
+    if(list){ return {out:arch.tar.map(e=>e.name).join("\n")+"\n",err:""}; }
+    if(extract){
+      for(const e of arch.tar){
+        const p=resolve(cwd,e.name.replace(/\/+$/,""));
+        if(e.type==="dir"){ mkdirp(p); }
+        else if(e.type==="link"){ const {par,name}=parentOf(p); if(par) par.children[name]={type:"link",target:e.target,targetAbs:e.targetAbs}; }
+        else { const dir=p.split("/").slice(0,-1).join("/"); if(dir) mkdirp(dir); writeFile(p,e.content); const nn=getNode(p); if(nn){ if(e.mode!=null)nn.mode=e.mode; if(e.gz)nn.gz=true; } }
+      }
+      if(verbose) out=arch.tar.map(e=>e.name).join("\n")+"\n";
+      return {out,err};
+    }
+    return {out:"",err:"tar: nothing to do\n"};
+  },
+
+  gzip(args){
+    let d=false,keep=false,files=[];
+    for(const a of args){
+      if(a==="--decompress")d=true; else if(a==="--keep")keep=true;
+      else if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="d")d=true;if(ch==="k")keep=true;}}
+      else files.push(a);
+    }
+    if(!files.length) return {out:"",err:"gzip: no input files\n"};
+    let err="";
+    for(const f of files){
+      const p=resolve(cwd,f); const node=getNode(p);
+      if(!node){err+="gzip: "+f+": No such file or directory\n";continue;}
+      if(node.type==="dir"){err+="gzip: "+f+": is a directory -- ignored\n";continue;}
+      if(d){
+        if(!f.endsWith(".gz")){err+="gzip: "+f+": unknown suffix -- ignored\n";continue;}
+        const {par,name}=parentOf(resolve(cwd,f.replace(/\.gz$/,"")));
+        par.children[name]={type:"file",content:node.content,mode:node.mode,tar:node.tar};
+        if(node.tar) par.children[name].gz=false;
+      } else {
+        if(node.gz){err+="gzip: "+f+": already has .gz suffix -- unchanged\n";continue;}
+        const {par,name}=parentOf(resolve(cwd,f+".gz"));
+        par.children[name]={type:"file",content:node.content,mode:node.mode,gz:true,tar:node.tar};
+      }
+      if(!keep){ const pp=parentOf(p); if(pp.par) delete pp.par.children[pp.name]; }
+    }
+    return {out:"",err};
+  },
+
+  gunzip(args){ return CMDS.gzip(["-d"].concat(args)); },
+
+  sort(args,stdin){
+    let r=false,n=false,u=false,files=[];
+    for(const a of args){
+      if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="r")r=true;else if(ch==="n")n=true;else if(ch==="u")u=true;}}
+      else files.push(a);
+    }
+    let text="",err="";
+    if(files.length){for(const f of files){const nd=deref(getNode(resolve(cwd,f)));if(!nd){err+="sort: cannot read: "+f+": No such file or directory\n";continue;}if(nd.type==="dir"){err+="sort: read failed: "+f+": Is a directory\n";continue;}text+=nd.content||"";}}
+    else text=stdin||"";
+    let lines=text.split("\n"); if(lines[lines.length-1]==="")lines.pop();
+    lines.sort((a,b)=> n? ((parseFloat(a)||0)-(parseFloat(b)||0)) : a.localeCompare(b));
+    if(r) lines.reverse();
+    if(u){const seen=new Set();lines=lines.filter(l=>{if(seen.has(l))return false;seen.add(l);return true;});}
+    return {out: lines.join("\n")+(lines.length?"\n":""), err};
+  },
+
+  uniq(args,stdin){
+    let c=false,d=false,uu=false,files=[];
+    for(const a of args){
+      if(a.startsWith("-")&&a!=="-"){for(const ch of a.slice(1)){if(ch==="c")c=true;else if(ch==="d")d=true;else if(ch==="u")uu=true;}}
+      else files.push(a);
+    }
+    let text="",err="";
+    if(files.length){const nd=deref(getNode(resolve(cwd,files[0])));if(!nd){return {out:"",err:"uniq: "+files[0]+": No such file or directory\n"};}if(nd.type==="file")text=nd.content||"";}
+    else text=stdin||"";
+    let lines=text.split("\n"); if(lines[lines.length-1]==="")lines.pop();
+    const out=[]; let i=0;
+    while(i<lines.length){
+      let j=i+1; while(j<lines.length&&lines[j]===lines[i])j++;
+      const count=j-i;
+      if(c) out.push(padL(count,7)+" "+lines[i]);
+      else if(d){ if(count>1) out.push(lines[i]); }
+      else if(uu){ if(count===1) out.push(lines[i]); }
+      else out.push(lines[i]);
+      i=j;
+    }
+    return {out: out.join("\n")+(out.length?"\n":""), err};
+  },
+
+  cut(args,stdin){
+    let delim="\t",fspec=null,cspec=null,files=[];
+    for(let i=0;i<args.length;i++){
+      const a=args[i];
+      if(a==="-d"){delim=args[++i];}
+      else if(a.startsWith("-d")){delim=a.slice(2);}
+      else if(a==="-f"){fspec=args[++i];}
+      else if(a.startsWith("-f")){fspec=a.slice(2);}
+      else if(a==="-c"){cspec=args[++i];}
+      else if(a.startsWith("-c")){cspec=a.slice(2);}
+      else files.push(a);
+    }
+    let text="",err="";
+    if(files.length){for(const f of files){const nd=deref(getNode(resolve(cwd,f)));if(!nd){err+="cut: "+f+": No such file or directory\n";continue;}if(nd.type==="file")text+=nd.content||"";}}
+    else text=stdin||"";
+    let lines=text.split("\n"); if(lines[lines.length-1]==="")lines.pop();
+    const parseSpec=(spec)=>{
+      const idxs=[];
+      spec.split(",").forEach(part=>{
+        let m;
+        if((m=part.match(/^(\d+)-(\d+)$/))){for(let i=+m[1];i<=+m[2];i++)idxs.push(i);}
+        else if((m=part.match(/^(\d+)-$/))){idxs.push({from:+m[1]});}
+        else if((m=part.match(/^-(\d+)$/))){for(let i=1;i<=+m[1];i++)idxs.push(i);}
+        else if(/^\d+$/.test(part)) idxs.push(+part);
+      });
+      return idxs;
+    };
+    const out=[];
+    for(const line of lines){
+      if(fspec){
+        const fields=line.split(delim); const idxs=parseSpec(fspec); const picked=[];
+        idxs.forEach(ix=>{ if(typeof ix==="object"){for(let i=ix.from;i<=fields.length;i++)picked.push(fields[i-1]);} else if(fields[ix-1]!==undefined)picked.push(fields[ix-1]); });
+        out.push(picked.join(delim));
+      } else if(cspec){
+        const idxs=parseSpec(cspec); let picked="";
+        idxs.forEach(ix=>{ if(typeof ix==="object"){picked+=line.slice(ix.from-1);} else if(line[ix-1]!==undefined)picked+=line[ix-1]; });
+        out.push(picked);
+      } else out.push(line);
+    }
+    return {out: out.join("\n")+(out.length?"\n":""), err};
+  },
+
+  tr(args,stdin){
+    let d=false,s=false,sets=[];
+    for(const a of args){
+      if(a==="-d")d=true; else if(a==="-s")s=true;
+      else if(a.startsWith("-")&&a.length>1&&/^-[ds]+$/.test(a)){for(const ch of a.slice(1)){if(ch==="d")d=true;if(ch==="s")s=true;}}
+      else sets.push(a);
+    }
+    const expand=(str)=>{ let o=""; for(let i=0;i<str.length;i++){ if(str[i+1]==="-"&&str[i+2]!==undefined){ for(let c=str.charCodeAt(i);c<=str.charCodeAt(i+2);c++)o+=String.fromCharCode(c); i+=2; } else o+=str[i]; } return o; };
+    let text=stdin||"";
+    const set1=expand(sets[0]||"");
+    if(d){ const rm=new Set(set1); text=text.split("").filter(c=>!rm.has(c)).join(""); }
+    else if(sets[1]!=null){ const set2=expand(sets[1]); const map={}; for(let i=0;i<set1.length;i++) map[set1[i]]=set2[i]!==undefined?set2[i]:set2[set2.length-1]; text=text.split("").map(c=>map[c]!==undefined?map[c]:c).join(""); }
+    if(s){ const sq=new Set(expand(sets[1]||sets[0]||"")); let o="",prev=null; for(const c of text){ if(sq.has(c)&&c===prev)continue; o+=c; prev=c; } text=o; }
+    return {out:text,err:""};
+  },
+
+  sed(args,stdin){
+    let n=false,script=null,files=[];
+    for(const a of args){
+      if(a==="-n")n=true;
+      else if(a.startsWith("-")&&a!=="-"){}
+      else if(script===null)script=a;
+      else files.push(a);
+    }
+    if(script===null) return {out:"",err:"usage: sed [-n] script [file]\n"};
+    let text="",err="";
+    if(files.length){for(const f of files){const nd=deref(getNode(resolve(cwd,f)));if(!nd){err+="sed: can't read "+f+": No such file or directory\n";continue;}if(nd.type==="dir"){err+="sed: read "+f+": Is a directory\n";continue;}text+=nd.content||"";}}
+    else text=stdin||"";
+    let lines=text.split("\n"); if(lines[lines.length-1]==="")lines.pop();
+    const out=[];
+    let m;
+    if((m=script.match(/^s(.)(.*)$/))){
+      const delim=m[1]; const seg=m[2].split(delim);
+      const re=seg[0]||"", rep=(seg[1]||"").replace(/\\n/g,"\n"), flags=seg[2]||"";
+      let rx; try{ rx=new RegExp(re,(flags.includes("g")?"g":"")+(flags.includes("i")?"i":"")); }catch(e){ return {out:"",err:"sed: bad regular expression\n"}; }
+      for(const line of lines){ if(!n) out.push(line.replace(rx,rep)); }
+    } else if((m=script.match(/^(\d+)d$/))){
+      const t=+m[1]; lines.forEach((line,i)=>{ if(i+1!==t) out.push(line); });
+    } else if((m=script.match(/^\/(.*)\/d$/))){
+      let rx; try{rx=new RegExp(m[1]);}catch(e){return{out:"",err:"sed: bad regular expression\n"};}
+      lines.forEach(line=>{ if(!rx.test(line)) out.push(line); });
+    } else if((m=script.match(/^\/(.*)\/p$/))){
+      let rx; try{rx=new RegExp(m[1]);}catch(e){return{out:"",err:"sed: bad regular expression\n"};}
+      lines.forEach(line=>{ if(rx.test(line)) out.push(line); });
+    } else {
+      return {out:"",err:"sed: unsupported script: "+script+"\n"};
+    }
+    return {out: out.join("\n")+(out.length?"\n":""), err};
+  },
+
+  awk(args,stdin){
+    let FS=null,program=null,files=[];
+    for(let i=0;i<args.length;i++){
+      const a=args[i];
+      if(a==="-F"){FS=args[++i];}
+      else if(a.startsWith("-F")){FS=a.slice(2);}
+      else if(program===null){program=a;}
+      else files.push(a);
+    }
+    if(program===null) return {out:"",err:"usage: awk [-F sep] program [file]\n"};
+    let text="",err="";
+    if(files.length){for(const f of files){const nd=deref(getNode(resolve(cwd,f)));if(!nd){err+="awk: can't open file "+f+"\n";continue;}if(nd.type==="file")text+=nd.content||"";}}
+    else text=stdin||"";
+    let lines=text.split("\n"); if(lines[lines.length-1]==="")lines.pop();
+    const sepRx = FS? (FS===" "?/\s+/:new RegExp(FS.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"))) : /\s+/;
+    let pattern=null,action=null,am=program.match(/^\s*(.*?)\s*\{(.*)\}\s*$/);
+    if(am){ pattern=am[1].trim()||null; action=am[2].trim(); }
+    else { pattern=program.trim()||null; action=null; }
+    const out=[];
+    lines.forEach((line,idx)=>{
+      const nr=idx+1;
+      const fields = FS? line.split(sepRx) : line.trim().split(sepRx);
+      if(!awkPat(pattern,fields,line,nr)) return;
+      if(action===null||action===""){ out.push(line); return; }
+      const pm=action.match(/^print\b(.*)$/);
+      if(pm){
+        const argstr=pm[1].trim();
+        if(argstr===""){ out.push(line); return; }
+        out.push(argstr.split(",").map(t=>awkVal(t,fields,line,nr)).join(" "));
+      } else { out.push(line); }
+    });
+    return {out: out.join("\n")+(out.length?"\n":""), err};
+  },
+
+  xargs(args,stdin){
+    let items=(stdin||"").split(/\s+/).filter(Boolean);
+    let repl=null,n=null,cmdToks=[];
+    for(let i=0;i<args.length;i++){
+      const a=args[i];
+      if(a==="-I"){repl=args[++i];}
+      else if(a.startsWith("-I")&&a.length>2){repl=a.slice(2);}
+      else if(a==="-n"){n=parseInt(args[++i],10)||null;}
+      else if(/^-n\d+$/.test(a)){n=parseInt(a.slice(2),10)||null;}
+      else cmdToks.push(a);
+    }
+    if(cmdToks.length===0) cmdToks=["echo"];
+    const name=cmdToks[0], fn=CMDS[name];
+    if(!fn) return {out:"",err:"xargs: "+name+": No such file or directory\n"};
+    let out="",err="";
+    const runBatch=(batch)=>{
+      let argv;
+      if(repl){ argv=cmdToks.slice(1).map(t=> t.split(repl).join(batch.join(" "))); }
+      else argv=cmdToks.slice(1).concat(batch);
+      const r=fn(argv,"");
+      out+= r.raw? r.out : esc(r.out||"");
+      if(r.err) err+=r.err;
+    };
+    if(items.length===0){ /* no input, run nothing */ }
+    else if(repl){ items.forEach(it=>runBatch([it])); }
+    else if(n){ for(let i=0;i<items.length;i+=n) runBatch(items.slice(i,i+n)); }
+    else runBatch(items);
+    return {out,err,raw:true};
+  },
+
+  chmod(args){
+    const modeArg=args[0], targets=args.slice(1);
+    if(!modeArg||!targets.length) return {out:"",err:"chmod: missing operand\n"};
+    let err="";
+    for(const t of targets){
+      const node=getNode(resolve(cwd,t));
+      if(!node){err+="chmod: cannot access '"+t+"': No such file or directory\n";continue;}
+      let cur = node.mode!=null? node.mode : (node.type==="dir"?0o755:0o644);
+      if(/^[0-7]{3,4}$/.test(modeArg)){ cur=parseInt(modeArg,8); }
+      else {
+        const m=modeArg.match(/^([ugoa]*)([+\-=])([rwx]+)$/);
+        if(!m){ err+="chmod: invalid mode: '"+modeArg+"'\n"; continue; }
+        let who=m[1]||"a"; const op=m[2]; const perms=m[3];
+        let mask=0; if(perms.includes("r"))mask|=4; if(perms.includes("w"))mask|=2; if(perms.includes("x"))mask|=1;
+        const apply=(shift)=>{ if(op==="+")cur|=(mask<<shift); else if(op==="-")cur&=~(mask<<shift); else { cur&=~(7<<shift); cur|=(mask<<shift); } };
+        if(who.includes("a")){apply(6);apply(3);apply(0);}
+        else { if(who.includes("u"))apply(6); if(who.includes("g"))apply(3); if(who.includes("o"))apply(0); }
+      }
+      node.mode=cur;
+    }
+    return {out:"",err};
+  },
+
+  history(){
+    let out="";
+    history.forEach((h,i)=>{out+=padL(i+1,4)+"  "+h+"\n";});
+    return {out,err:""};
+  }
+};
+
+function jqStep(step,v){
+  if(step===".") return [v];
+  if(step==="length") return [ Array.isArray(v)?v.length : typeof v==="string"?v.length : (v&&typeof v==="object")?Object.keys(v).length:0 ];
+  if(step==="keys"||step==="keys_unsorted") return [ (v&&typeof v==="object")?Object.keys(v).sort():[] ];
+  const toks=step.match(/\.[A-Za-z_][\w]*|\["[^"]*"\]|\[\d+\]|\[\]/g);
+  if(!toks) return [v];
+  let vals=[v];
+  for(const t of toks){
+    const next=[];
+    for(const cv of vals){
+      if(cv==null){ next.push(null); continue; }
+      if(t==="[]"){ if(Array.isArray(cv)) next.push(...cv); else if(typeof cv==="object") next.push(...Object.values(cv)); }
+      else if(/^\[\d+\]$/.test(t)) next.push(cv[parseInt(t.slice(1),10)]);
+      else if(/^\["[^"]*"\]$/.test(t)) next.push(cv[t.slice(2,-2)]);
+      else if(t.startsWith(".")) next.push(cv[t.slice(1)]);
+    }
+    vals=next;
+  }
+  return vals;
+}
+function awkVal(tok,fields,line,nr){
+  tok=tok.trim();
+  if(tok==="$0") return line;
+  if(tok==="NR") return String(nr);
+  if(tok==="NF") return String(fields.length);
+  let m=tok.match(/^\$NF$/); if(m) return fields[fields.length-1]||"";
+  m=tok.match(/^\$\(NF-(\d+)\)$/); if(m) return fields[fields.length-1-(+m[1])]||"";
+  m=tok.match(/^\$(\d+)$/); if(m){const k=+m[1]; return k===0?line:(fields[k-1]||"");}
+  m=tok.match(/^"(.*)"$/); if(m) return m[1];
+  return tok;
+}
+function awkPat(pattern,fields,line,nr){
+  if(!pattern) return true;
+  let m=pattern.match(/^\/(.*)\/$/); if(m){try{return new RegExp(m[1]).test(line);}catch(e){return false;}}
+  m=pattern.match(/^NR\s*==\s*(\d+)$/); if(m) return nr===+m[1];
+  m=pattern.match(/^NR\s*>\s*(\d+)$/); if(m) return nr>+m[1];
+  m=pattern.match(/^NR\s*<\s*(\d+)$/); if(m) return nr<+m[1];
+  m=pattern.match(/^\$(\d+)\s*==\s*(.+)$/); if(m){const v=fields[+m[1]-1]||""; return v===m[2].trim().replace(/^"|"$/g,"");}
+  m=pattern.match(/^\$(\d+)\s*~\s*\/(.*)\/$/); if(m){const v=fields[+m[1]-1]||""; try{return new RegExp(m[2]).test(v);}catch(e){return false;}}
+  return true;
+}
+
+function walkFind(node,path,base,rx,emit){
+  if(!rx||rx.test(base)) emit(path+"\n");
+  if(node.type==="dir"){for(const k of Object.keys(node.children)){walkFind(node.children[k],path+"/"+k,k,rx,emit);}}
+}
+
+/* Run a full input line: handle redirection + pipes. Returns {text, html, isErr} */
+/* pull trailing redirections off a command line (simple parser: operators inside quotes at the very end are not special — matches prior behavior) */
+function parseRedirs(work){
+  const R={stdin:null,out:null,outApp:false,err:null,errApp:false,mergeErr:false};
+  let changed=true,m;
+  while(changed){
+    changed=false;
+    if((m=work.match(/\s2>&1\s*$/))){ R.mergeErr=true; work=work.slice(0,m.index); changed=true; continue; }
+    if((m=work.match(/\s2>>\s*(\S+)\s*$/))){ R.err=m[1]; R.errApp=true; work=work.slice(0,m.index); changed=true; continue; }
+    if((m=work.match(/\s2>\s*(\S+)\s*$/))){ R.err=m[1]; work=work.slice(0,m.index); changed=true; continue; }
+    if((m=work.match(/\s&>\s*(\S+)\s*$/))){ R.out=m[1]; R.mergeErr=true; work=work.slice(0,m.index); changed=true; continue; }
+    if((m=work.match(/\s1?>>\s*(\S+)\s*$/))){ R.out=m[1]; R.outApp=true; work=work.slice(0,m.index); changed=true; continue; }
+    if((m=work.match(/\s1?>\s*(\S+)\s*$/))){ R.out=m[1]; work=work.slice(0,m.index); changed=true; continue; }
+    if((m=work.match(/\s<\s*(\S+)\s*$/))){ R.stdin=m[1]; work=work.slice(0,m.index); changed=true; continue; }
+  }
+  R.cmd=work;
+  return R;
+}
+function writeRedir(path,content,append){
+  const {par,name}=parentOf(resolve(cwd,path));
+  if(!par) return "cannot create "+path+": No such file or directory\n";
+  const ex=par.children[name];
+  const prev=(append&&ex&&ex.type==="file")?ex.content:"";
+  par.children[name]=newFile(prev+content);
+  return "";
+}
+
+function runSimple(line){
+  let work=line;
+  let background=false;
+  { const tw=work.trim(); if(tw.endsWith("&") && !tw.endsWith("&&")){ background=true; work=tw.slice(0,-1).trim(); } }
+  work=expandVars(work);
+  const R=parseRedirs(work); work=R.cmd;
+  const segments=splitPipes(work).map(s=>s.trim()).filter(s=>s.length);
+  let lastRaw=false; let errAcc=""; let clearScreen=false;
+  let htmlOut=""; let lastCode=0;
+  let stdin="";
+  if(R.stdin!=null){ const nd=deref(getNode(resolve(cwd,R.stdin))); if(nd&&nd.type==="file") stdin=nd.content||""; else errAcc+=(R.stdin+": No such file or directory\n"); }
+  for(let s=0;s<segments.length;s++){
+    const toks=expandGlobs(tokenizeArgs(segments[s]));
+    const name=toks[0];
+    const argv=toks.slice(1);
+    if(!name) continue;
+    // bare assignments:  NAME=value  (one or more, no command)
+    if(toks.every(t=>/^[A-Za-z_]\w*=/.test(t))){
+      for(const t of toks){ const eq=t.indexOf("="); ENV[t.slice(0,eq)]=t.slice(eq+1); }
+      stdin=""; lastRaw=false; htmlOut=""; lastCode=0;
+      continue;
+    }
+    const fn=CMDS[name];
+    if(!fn){
+      errAcc+=name+": command not found\n";
+      stdin=""; lastRaw=false; lastCode=127;
+      continue;
+    }
+    const res=fn(argv,stdin);
+    if(res.clear) clearScreen=true;
+    if(res.err) errAcc+=res.err;
+    // stdin for next stage should be plain text (strip html if raw)
+    stdin= res.raw? stripTags(res.out) : (res.out||"");
+    htmlOut= res.raw? res.out : esc(res.out||"");
+    lastRaw= !!res.raw;
+    lastCode = res.code!=null ? res.code : ((res.err&&res.err.length)?1:0);
+  }
+  // apply output redirections
+  if(R.mergeErr){ stdin=stdin+errAcc; if(errAcc) htmlOut=htmlOut+esc(errAcc); errAcc=""; }
+  if(R.err!=null){ errAcc=writeRedir(R.err,errAcc,R.errApp); }
+  if(R.out!=null){ const e=writeRedir(R.out,stdin,R.outApp); htmlOut=""; stdin=""; if(e)errAcc+=e; }
+  if(background && work.trim()){
+    const job=registerJob(work.trim());
+    const idx=runningJobs().length;
+    htmlOut='<span class="l-dim">['+idx+'] '+job.pid+"</span>\n"+htmlOut;
+    lastCode=0;
+  }
+  return {html:htmlOut, err:errAcc, clear:clearScreen, plain:stdin, code:lastCode};
+}
+
+/* split a line on ; && || (respecting quotes) into a chain of {op, cmd} */
+const KW_OPEN={"for":1,"while":1,"until":1,"if":1}, KW_CLOSE={"done":1,"fi":1};
+function splitChain(line){
+  const parts=[]; let cur="",q=null,op=null,pdepth=0,bdepth=0,word="";
+  const flush=()=>{ if(word){ if(KW_OPEN[word])bdepth++; else if(KW_CLOSE[word])bdepth=Math.max(0,bdepth-1); word=""; } };
+  const push=(o)=>{ parts.push({op,cmd:cur}); op=o; cur=""; };
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(q){ cur+=c; if(c===q)q=null; continue; }
+    if(/[A-Za-z_]/.test(c)){ word+=c; cur+=c; continue; }
+    flush();
+    if(c==="'"||c==='"'){ q=c; cur+=c; continue; }
+    if(c==="("){ pdepth++; cur+=c; continue; }
+    if(c===")"){ if(pdepth>0)pdepth--; cur+=c; continue; }
+    if(pdepth===0 && bdepth===0 && c===";"){ push(";"); continue; }
+    if(pdepth===0 && bdepth===0 && c==="&"&&line[i+1]==="&"){ push("&&"); i++; continue; }
+    if(pdepth===0 && bdepth===0 && c==="|"&&line[i+1]==="|"){ push("||"); i++; continue; }
+    cur+=c;
+  }
+  flush();
+  parts.push({op,cmd:cur});
+  return parts.filter(p=>p.cmd.trim()!=="");
+}
+
+/* while COND; do BODY; done */
+function tryWhile(line){
+  const m=line.match(/^\s*while\s+([\s\S]+?)\s*;\s*do\b([\s\S]+?)\s*;?\s*done\s*;?\s*$/);
+  if(!m) return null;
+  const cond=m[1].trim(), body=m[2].trim();
+  const htmlParts=[]; let clearAll=false, code=0, outText="", guard=0;
+  while(guard++ < 10000){
+    const cres=runLine(cond);
+    if(cres.code!==0) break;
+    const res=runLine(body);
+    if(res.clear) clearAll=true;
+    code=res.code;
+    if(res.html && res.html.length) htmlParts.push(res.html.replace(/\n$/,""));
+    outText += (res.plain!=null ? res.plain : stripTags(res.html||""));
+  }
+  if(guard>=10000) htmlParts.push('<span class="l-err">while: stopped after 10000 iterations (runaway loop)</span>');
+  return {html:htmlParts.join("\n"), err:"", clear:clearAll, plain:outText, code};
+}
+
+/* if COND; then BODY; [else BODY2;] fi */
+function tryIf(line){
+  const m=line.match(/^\s*if\b([\s\S]+?);\s*then\b([\s\S]+?)(?:;\s*else\b([\s\S]+?))?;?\s*fi\s*;?\s*$/);
+  if(!m) return null;
+  const cond=m[1].trim(), thenB=m[2].trim(), elseB=m[3]!=null?m[3].trim():null;
+  const cres=runLine(cond);
+  if(cres.code===0) return runLine(thenB);
+  if(elseB!=null) return runLine(elseB);
+  return {html:"", err:"", clear:false, plain:"", code:cres.code};
+}
+
+/* dispatch a single chain segment to a compound handler or the simple runner */
+function runSegment(seg){
+  return tryForLoop(seg) || tryWhile(seg) || tryIf(seg) || runSimple(seg);
+}
+
+/* for VAR in LIST; do BODY; done */
+function forList(listStr){
+  return expandGlobs(tokenizeArgs(expandVars(listStr)));
+}
+function tryForLoop(line){
+  const m=line.match(/^\s*for\s+([A-Za-z_]\w*)\s+in\s+(.+?)\s*;\s*do\b([\s\S]+?)\s*;?\s*done\s*;?\s*$/);
+  if(!m) return null;
+  const varName=m[1], words=forList(m[2]), body=m[3].trim();
+  const htmlParts=[]; let clearAll=false, code=0, outText="";
+  for(const w of words){
+    ENV[varName]=w;
+    const res=runLine(body);
+    if(res.clear) clearAll=true;
+    code=res.code;
+    if(res.html && res.html.length) htmlParts.push(res.html.replace(/\n$/,""));
+    outText += (res.plain!=null ? res.plain : stripTags(res.html||""));
+  }
+  return {html:htmlParts.join("\n"), err:"", clear:clearAll, plain:outText, code};
+}
+
+/* orchestrate a chained command line, honoring exit codes for && and || */
+function runLine(line){
+  const parts=splitChain(line);
+  const htmlParts=[]; let clearAll=false, code=0, outText="";
+  for(let i=0;i<parts.length;i++){
+    const p=parts[i];
+    const run = p.op==="&&" ? code===0 : p.op==="||" ? code!==0 : true;
+    if(!run) continue;
+    const res=runSegment(p.cmd);
+    if(res.clear) clearAll=true;
+    code=res.code;
+    if(res.html && res.html.length) htmlParts.push(res.html.replace(/\n$/,""));
+    if(res.err && res.err.length) htmlParts.push('<span class="l-err">'+esc(res.err.replace(/\n$/,""))+"</span>");
+    outText += stripTags(res.html||"") + "\n";
+  }
+  return {html:htmlParts.join("\n"), err:"", clear:clearAll, plain:outText, code};
+}
+
+function splitPipes(str){
+  const out=[]; let cur="",q=null,depth=0;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(q){ cur+=c; if(c===q)q=null; continue; }
+    if(c==='"'||c==="'"){ q=c; cur+=c; continue; }
+    if(c==="("){ depth++; cur+=c; continue; }
+    if(c===")"){ if(depth>0)depth--; cur+=c; continue; }
+    if(depth===0 && c==="|"){ out.push(cur); cur=""; continue; }
+    cur+=c;
+  }
+  out.push(cur);
+  return out;
+}
+function stripTags(s){ return s.replace(/<[^>]*>/g,""); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+/* ===================================================================
+   LESSON CONTENT — the curriculum
+   =================================================================== */
+const BELTS=[
+  {key:"white", name:"White", color:"#EDE9DE"},
+  {key:"yellow",name:"Yellow",color:"#F2CE3C"},
+  {key:"orange",name:"Orange",color:"#EA8C2E"},
+  {key:"green", name:"Green", color:"#4FA34F"},
+  {key:"blue",  name:"Blue",  color:"#3F6FD6"},
+  {key:"gold",  name:"Gold",  color:"#C9962B"},
+  {key:"purple",name:"Purple",color:"#7E57C2"},
+  {key:"brown", name:"Brown", color:"#7A5230"},
+  {key:"slate", name:"Slate", color:"#5F6B7C"},
+  {key:"red",   name:"Red",   color:"#C0392B"},
+  {key:"rose",  name:"Rose",  color:"#CC4B8E"},
+  {key:"teal",  name:"Teal",  color:"#149E93"},
+  {key:"indigo",name:"Indigo",color:"#4338CA"},
+  {key:"cyan",  name:"Cyan",  color:"#0FA8C4"},
+  {key:"steel", name:"Steel", color:"#7E8AA2"},
+  {key:"black", name:"Black", color:"#20242B"},
+];
+const beltColor=(k)=>(BELTS.find(b=>b.key===k)||{}).color;
+const beltIndex=(k)=>BELTS.findIndex(b=>b.key===k);
+
+const base=(cmd)=>tokenize(cmd.trim())[0]||"";
+
+const LESSONS=[
+  { belt:"white", title:"Where am I?", sub:"pwd",
+    prose:"Every journey begins by knowing where you stand. The shell always has a <strong>working directory</strong> — the folder your commands act on. The command <code>pwd</code> (\"print working directory\") reveals it.",
+    task:"Print your current location with <b>pwd</b>.",
+    hint:"Type <b>pwd</b> and press Enter. Nothing more.",
+    check:(c)=> base(c.cmd)==="pwd",
+    ok:"You know where you stand. That is the first discipline." },
+
+  { belt:"white", title:"Survey the room", sub:"ls",
+    prose:"Before you move, you look. <code>ls</code> (\"list\") shows what lives in the current directory — files and folders alike. Directories appear in <strong>blue</strong>.",
+    task:"List the contents of your home directory with <b>ls</b>.",
+    hint:"Just <b>ls</b>. Try <b>ls -la</b> too, to see hidden files and details.",
+    check:(c)=> base(c.cmd)==="ls",
+    ok:"You see the room clearly now." },
+
+  { belt:"white", title:"Enter a room", sub:"cd",
+    prose:"To work inside a folder you must step into it. <code>cd</code> (\"change directory\") moves you. There is a <code>projects</code> folder in your home — walk into it. Use <code>cd ..</code> to step back out, and <code>cd ~</code> to return home.",
+    task:"Change into the <b>projects</b> directory with <b>cd projects</b>.",
+    hint:"Type <b>cd projects</b>. Confirm with <b>pwd</b> — it should end in /projects.",
+    check:(c)=> cwd.endsWith("/projects"),
+    ok:"You move through the filesystem like walking its halls." },
+
+  { belt:"yellow", title:"Read the scroll", sub:"cat",
+    prose:"A file's contents are opened with <code>cat</code> (\"concatenate\"). There is a <code>README.txt</code> in your home directory left by the sensei. Return home first if you wandered off — <code>cd ~</code> — then read it.",
+    task:"Display <b>README.txt</b> with <b>cat README.txt</b>.",
+    hint:"If you're in projects, run <b>cd ~</b> first, then <b>cat README.txt</b>.",
+    setup:()=>{ if(!H("README.txt")) writeFile(HOME+"/README.txt","Welcome to the Terminal Dojo.\nHere you learn the way of the shell by doing.\n"); },
+    check:(c)=> base(c.cmd)==="cat" && /welcome/i.test(c.out),
+    ok:"The written word yields to you." },
+
+  { belt:"yellow", title:"Write with your voice", sub:"echo  >",
+    prose:"<code>echo</code> speaks text back to you. Aim that voice into a file with the <strong>redirection</strong> arrow <code>&gt;</code>, and the words are saved instead of printed. <code>&gt;</code> overwrites; <code>&gt;&gt;</code> appends.",
+    task:"Create <b>notes.txt</b> containing the words <b>hello dojo</b> using <b>echo \"hello dojo\" &gt; notes.txt</b>.",
+    hint:"Run <b>echo \"hello dojo\" &gt; notes.txt</b>, then prove it with <b>cat notes.txt</b>.",
+    check:()=>{ const n=H("notes.txt"); return n&&n.type==="file"&&/hello dojo/i.test(n.content); },
+    ok:"You now write to the world, not just read it." },
+
+  { belt:"yellow", title:"Build a room", sub:"mkdir",
+    prose:"Structure is discipline. <code>mkdir</code> (\"make directory\") creates a new folder. Practice deserves its own space — make one called <code>kata</code>.",
+    task:"Create a directory named <b>kata</b> with <b>mkdir kata</b>.",
+    hint:"Type <b>mkdir kata</b>, then run <b>ls</b> — you'll see it in blue.",
+    check:()=>{ const n=H("kata"); return n&&n.type==="dir"; },
+    ok:"You shape the space you train in." },
+
+  { belt:"orange", title:"Duplicate a form", sub:"cp",
+    prose:"To preserve work before changing it, you copy. <code>cp</code> (\"copy\") duplicates a file: <code>cp SOURCE DEST</code>. A dataset <code>data.csv</code> sits in your home — make a safe backup of it.",
+    task:"Copy <b>data.csv</b> to <b>backup.csv</b> with <b>cp data.csv backup.csv</b>.",
+    hint:"Run <b>cp data.csv backup.csv</b>. Both should appear in <b>ls</b>.",
+    setup:()=>{ if(!H("data.csv")) writeFile(HOME+"/data.csv","id,score\n1,88\n2,73\n3,95\n"); },
+    check:()=>{ const s=H("data.csv"),d=H("backup.csv"); return s&&d&&d.type==="file"&&d.content===s.content; },
+    ok:"You guard your work before you risk it. Wise." },
+
+  { belt:"orange", title:"Rename and relocate", sub:"mv",
+    prose:"<code>mv</code> (\"move\") both moves and renames — moving a file onto a new name <em>is</em> renaming it. A file <code>draft.txt</code> is ready to be finalized.",
+    task:"Rename <b>draft.txt</b> to <b>final.txt</b> with <b>mv draft.txt final.txt</b>.",
+    hint:"Run <b>mv draft.txt final.txt</b>. Afterwards draft.txt is gone and final.txt remains.",
+    setup:()=>{ if(!H("final.txt")&&!H("draft.txt")) writeFile(HOME+"/draft.txt","first attempt\n"); },
+    check:()=> H("final.txt")&&!H("draft.txt"),
+    ok:"One motion, renamed and moved. Efficiency is a virtue." },
+
+  { belt:"orange", title:"Clear away clutter", sub:"rm",
+    prose:"What no longer serves you is removed. <code>rm</code> (\"remove\") deletes a file — permanently, with no trash can. Wield it carefully. A stray <code>temp.log</code> is cluttering your home.",
+    task:"Delete <b>temp.log</b> with <b>rm temp.log</b>.",
+    hint:"Type <b>rm temp.log</b>. Confirm it's gone with <b>ls</b>.",
+    setup:()=>{ if(!H("temp.log")) writeFile(HOME+"/temp.log","junk\n"); },
+    check:()=> !H("temp.log"),
+    ok:"A clean space is a clear mind." },
+
+  { belt:"green", title:"Find the signal", sub:"grep",
+    prose:"Among many lines, you seek the few that matter. <code>grep</code> searches text for a <strong>pattern</strong> and prints only the matching lines: <code>grep PATTERN FILE</code>. Your <code>server.log</code> is full of noise — find the failures.",
+    task:"Show only lines containing <b>ERROR</b> with <b>grep ERROR server.log</b>.",
+    hint:"Run <b>grep ERROR server.log</b>. Matches are highlighted in amber.",
+    setup:seedLog,
+    check:(c)=> base(c.cmd)==="grep" && /ERROR/.test(c.out),
+    ok:"You pull the signal from the noise." },
+
+  { belt:"green", title:"Count what you found", sub:"wc -l",
+    prose:"Numbers turn observation into knowledge. <code>wc</code> (\"word count\") counts lines, words, and bytes. With <code>-l</code> it counts <strong>lines</strong> only: <code>wc -l FILE</code>.",
+    task:"Count the lines in <b>server.log</b> with <b>wc -l server.log</b>.",
+    hint:"Run <b>wc -l server.log</b>. You'll get a single number and the filename.",
+    setup:seedLog,
+    check:(c)=> base(c.cmd)==="wc" && /-l/.test(c.cmd) && /server\.log/.test(c.cmd),
+    ok:"You measure, therefore you understand." },
+
+  { belt:"green", title:"Hunt through the tree", sub:"find",
+    prose:"Files hide in nested folders. <code>find</code> walks an entire directory tree and reports what matches. <code>find . -name \"PATTERN\"</code> searches from the current directory (<code>.</code>) downward, matching filenames — wildcards like <code>*</code> welcome. A <code>logs</code> folder now holds several log files scattered about.",
+    task:"Find every file ending in <b>.log</b> with <b>find . -name \"*.log\"</b>.",
+    hint:"Run <b>find . -name \"*.log\"</b>. The quotes stop the shell expanding the <code>*</code> too early.",
+    setup:seedLogsTree,
+    check:(c)=> base(c.cmd)==="find" && /-name/.test(c.cmd) && /\.log/.test(c.out),
+    ok:"No file can hide from you now." },
+
+  { belt:"blue", title:"Join two techniques", sub:"grep | wc",
+    prose:"The true art of the shell is the <strong>pipe</strong> <code>|</code> — it feeds one command's output straight into the next as input. Chain <code>grep</code> into <code>wc -l</code> and you count matches without ever saving a file. This is the way.",
+    task:"Count how many <b>ERROR</b> lines exist using a pipe: <b>grep ERROR server.log | wc -l</b>.",
+    hint:"Run <b>grep ERROR server.log | wc -l</b>. The answer is a single number.",
+    setup:seedLog,
+    check:(c)=> c.cmd.includes("|") && c.cmd.includes("grep") && c.cmd.includes("wc"),
+    ok:"Two techniques, one flowing motion. You understand the pipe." },
+
+  { belt:"blue", title:"Put things in order", sub:"sort",
+    prose:"Order reveals pattern. <code>sort</code> arranges lines alphabetically by default; <code>-n</code> sorts numerically, <code>-r</code> reverses. A shuffled list of <code>fruits.txt</code> waits to be tidied.",
+    task:"Sort the lines of <b>fruits.txt</b> with <b>sort fruits.txt</b>.",
+    hint:"Run <b>sort fruits.txt</b>. Try <b>sort -r fruits.txt</b> to reverse it.",
+    setup:seedFruits,
+    check:(c)=>{ if(base(c.cmd)!=="sort")return false; const ls=c.out.split("\n").filter(Boolean); if(ls.length<3)return false; for(let i=1;i<ls.length;i++) if(ls[i-1].localeCompare(ls[i])>0) return false; return true; },
+    ok:"From chaos, order. The list obeys you." },
+
+  { belt:"blue", title:"Count the unique", sub:"sort | uniq -c",
+    prose:"<code>uniq</code> collapses <em>adjacent</em> repeated lines — so it is almost always paired with <code>sort</code> first. With <code>-c</code> it prefixes each line with how many times it occurred. Together, <code>sort | uniq -c</code> is the classic way to tally anything. A file <code>votes.txt</code> holds one vote per line.",
+    task:"Tally the votes: <b>sort votes.txt | uniq -c</b>.",
+    hint:"Run <b>sort votes.txt | uniq -c</b>. Each line shows a count next to its value.",
+    setup:seedVotes,
+    check:(c)=> c.cmd.includes("sort")&&c.cmd.includes("uniq")&&/-c/.test(c.cmd)&&/\d/.test(c.out),
+    ok:"You turn a pile of records into a clean tally. Essential shell arithmetic." },
+
+  { belt:"gold", title:"One after another", sub:";",
+    prose:"A semicolon <code>;</code> simply runs commands one after the next on a single line, no matter how each turns out. It is the plainest way to chain — do this, then that.",
+    task:"Run two commands in sequence: <b>echo first ; echo second</b>.",
+    hint:"Type <b>echo first ; echo second</b>. Both run, top to bottom, regardless of outcome.",
+    check:(c)=> c.cmd.includes(";") && /first/.test(c.out) && /second/.test(c.out),
+    ok:"You string actions together. The line becomes a little program." },
+
+  { belt:"gold", title:"Only if it succeeds", sub:"&&",
+    prose:"Every command reports whether it <strong>succeeded</strong> or failed — an exit status you don't normally see. <code>&&</code> uses it: the right side runs <em>only if</em> the left side succeeded. This is how you chain steps safely — <code>mkdir dir && cd dir</code> won't try to enter a folder that failed to appear.",
+    task:"Make a folder and enter it, only if the first step works: <b>mkdir practice && cd practice</b>.",
+    hint:"Run <b>mkdir practice && cd practice</b>. Because mkdir succeeds, cd runs too — <b>pwd</b> ends in /practice.",
+    setup:()=>{ const q=parentOf(resolve(HOME,"practice")); if(q.par&&q.par.children[q.name]) delete q.par.children[q.name]; },
+    check:(c)=> c.cmd.includes("&&") && cwd.endsWith("/practice"),
+    ok:"You guard each step behind the last. Safe, deliberate motion." },
+
+  { belt:"gold", title:"Or else, recover", sub:"||",
+    prose:"The mirror of <code>&&</code> is <code>||</code>: the right side runs <em>only if</em> the left side <strong>failed</strong>. It is the shell's way of saying \"try this, otherwise fall back.\" Reading a file that isn't there fails — so the fallback fires.",
+    task:"Try to read a missing file, and recover: <b>cat missing.txt || echo \"using defaults\"</b>.",
+    hint:"Run <b>cat missing.txt || echo \"using defaults\"</b>. cat fails, so the echo after || runs.",
+    check:(c)=> c.cmd.includes("||") && /using defaults/.test(c.out),
+    ok:"You plan for failure and route around it. This is how robust scripts are written." },
+
+  { belt:"gold", title:"Capture a command's output", sub:"$(...)",
+    prose:"The deepest composition of all: <code>$(...)</code> runs a command and drops its <strong>output straight into the line</strong>, as if you had typed the result yourself. Feed it into a variable — <code>export TODAY=\"$(date)\"</code> — or embed it inside text. (Older scripts use backticks <code>`…`</code> for the same thing; <code>$(...)</code> is the modern form.)",
+    task:"Embed a command's result inside a sentence: <b>echo \"server.log has $(grep -c ERROR server.log) errors\"</b>.",
+    hint:"Run <b>echo \"server.log has $(grep -c ERROR server.log) errors\"</b> — the <code>$(...)</code> becomes <code>3</code> before echo ever runs. Then try <b>export TODAY=\"$(date)\"</b> and <b>echo $TODAY</b> (quote it, so the spaces survive).",
+    setup:seedLog,
+    check:(c)=> c.cmd.includes("$(") && /has 3 errors/.test(c.out),
+    ok:"You nest commands within commands. The shell holds no deeper magic than this." },
+
+  { belt:"purple", title:"Slice out a column", sub:"cut",
+    prose:"Structured data comes in columns. <code>cut</code> extracts them: <code>cut -d DELIM -f N</code> keeps field <code>N</code>, split on <code>DELIM</code>. A comma-separated <code>people.csv</code> holds names, ages, and cities — pull just one column.",
+    task:"Extract the first column (names) with <b>cut -d, -f1 people.csv</b>.",
+    hint:"Run <b>cut -d, -f1 people.csv</b>. The <code>-d,</code> sets the delimiter to a comma; <code>-f1</code> picks field one.",
+    setup:seedPeople,
+    check:(c)=> base(c.cmd)==="cut" && /kenji/.test(c.out) && !/osaka/.test(c.out),
+    ok:"You carve exactly the column you need from the table." },
+
+  { belt:"purple", title:"Transform each character", sub:"tr",
+    prose:"<code>tr</code> (\"translate\") maps one set of characters to another as text streams through it — it reads from a pipe, not a file. <code>tr 'a-z' 'A-Z'</code> shouts everything in uppercase; <code>tr -d '0-9'</code> strips digits entirely.",
+    task:"Pipe text through tr to uppercase it: <b>echo \"quiet dojo\" | tr 'a-z' 'A-Z'</b>.",
+    hint:"Run <b>echo \"quiet dojo\" | tr 'a-z' 'A-Z'</b>. The result should read QUIET DOJO.",
+    check:(c)=> c.cmd.includes("tr") && /QUIET DOJO/.test(c.out),
+    ok:"Every character bends to your instruction." },
+
+  { belt:"purple", title:"Rewrite on the fly", sub:"sed",
+    prose:"<code>sed</code> is a stream editor — it transforms text as it flows past. Its signature move is substitution: <code>sed 's/OLD/NEW/g' FILE</code> replaces every <code>OLD</code> with <code>NEW</code>. The trailing <code>g</code> means \"global\" — every match on each line, not just the first.",
+    task:"Rename every <b>ERROR</b> to <b>FAILURE</b> in server.log: <b>sed 's/ERROR/FAILURE/g' server.log</b>.",
+    hint:"Run <b>sed 's/ERROR/FAILURE/g' server.log</b>. The file itself is untouched — sed prints the edited stream.",
+    setup:seedLog,
+    check:(c)=> base(c.cmd)==="sed" && /FAILURE/.test(c.out) && !/ERROR/.test(c.out),
+    ok:"You reshape text as it flows. Powerful." },
+
+  { belt:"brown", title:"Cut a column with awk", sub:"awk",
+    prose:"<code>awk</code> sees each line as a set of <strong>fields</strong> split on whitespace: <code>$1</code> is the first, <code>$2</code> the second, <code>$NF</code> the last. <code>awk '{print $1}'</code> prints just the first column of every line — and unlike <code>cut</code>, it handles ragged whitespace gracefully and can filter by pattern too.",
+    task:"Print the log level (first field) of each line: <b>awk '{print $1}' server.log</b>.",
+    hint:"Run <b>awk '{print $1}' server.log</b> for a clean column of INFO / WARN / ERROR. Try <b>awk '/ERROR/ {print $NF}'</b> too.",
+    setup:seedLog,
+    check:(c)=>{ if(base(c.cmd)!=="awk")return false; const ls=c.out.split("\n").filter(Boolean); return ls.length>=3 && ls.every(l=>/^(INFO|WARN|ERROR)$/.test(l.trim())); },
+    ok:"You slice structured text into exactly the column you need." },
+
+  { belt:"brown", title:"Feed one command with another", sub:"xargs",
+    prose:"Some commands read from stdin; others expect <em>arguments</em>. <code>xargs</code> bridges them — it takes a list on stdin and hands it to another command as arguments. Paired with <code>find</code>, it acts on many files at once: <code>find … | xargs wc -l</code> counts the lines of every file found.",
+    task:"Count the lines of all log files at once: <b>find . -name \"*.log\" | xargs wc -l</b>.",
+    hint:"Run <b>find . -name \"*.log\" | xargs wc -l</b>. find lists the files; xargs feeds them to wc as arguments.",
+    setup:seedLogsTree,
+    check:(c)=> c.cmd.includes("xargs")&&c.cmd.includes("find")&&/\d/.test(c.out),
+    ok:"You chain discovery into action. This is real shell fluency." },
+
+  { belt:"brown", title:"Grant permission", sub:"chmod",
+    prose:"Every file carries <strong>permissions</strong> — who may read, write, or execute it. Run <code>ls -l</code> and read the leftmost column: <code>rwx</code> for the owner, then group, then others. A fresh script <code>script.sh</code> can't run yet — it lacks the execute (<code>x</code>) bit. <code>chmod +x FILE</code> grants it.",
+    task:"Make <b>script.sh</b> executable with <b>chmod +x script.sh</b>.",
+    hint:"Run <b>chmod +x script.sh</b>, then <b>ls -l script.sh</b> — the x bits appear (-rwxr-xr-x).",
+    setup:seedScript,
+    check:()=>{ const n=H("script.sh"); return !!n && ((n.mode||0)&0o100)!==0; },
+    ok:"You control who may act on a file. The keys of the dojo are yours." },
+
+  { belt:"slate", title:"Read a variable", sub:"$VAR",
+    prose:"The shell keeps a set of <strong>environment variables</strong> — named values it carries with it, like <code>USER</code> and <code>HOME</code>. Write <code>$NAME</code> and the shell substitutes the value before the command runs. It is how programs learn who you are and where things live.",
+    task:"Print your username by expanding a variable: <b>echo $USER</b>.",
+    hint:"Run <b>echo $USER</b> — the shell replaces <code>$USER</code> with <code>student</code>. Try <b>echo $HOME</b> and <b>echo $SHELL</b> too.",
+    check:(c)=> base(c.cmd)==="echo" && /\$/.test(c.cmd) && (/\bstudent\b/.test(c.out) || /\/home\/student/.test(c.out) || /\/bin\//.test(c.out)),
+    ok:"The shell's memory is an open book to you." },
+
+  { belt:"slate", title:"Set your own variable", sub:"export",
+    prose:"You can add variables of your own. <code>export NAME=value</code> creates one and makes it available to the programs you run. (Plain <code>NAME=value</code> sets it for this shell only.) No spaces around the <code>=</code> — that matters.",
+    task:"Create a variable named GREETING: <b>export GREETING=konnichiwa</b>.",
+    hint:"Run <b>export GREETING=konnichiwa</b>. Nothing prints — but the value is now stored. Prove it with <b>echo $GREETING</b>.",
+    check:(c)=> c.cmd.includes("GREETING") && typeof ENV.GREETING==="string" && ENV.GREETING.length>0,
+    ok:"You shape the environment itself now, not just files." },
+
+  { belt:"slate", title:"Quotes decide expansion", sub:"\"$VAR\"",
+    prose:"Quoting changes everything here. Inside <strong>double quotes</strong> variables still expand: <code>\"hi $GREETING\"</code>. Inside <strong>single quotes</strong> they do <em>not</em> — <code>'$GREETING'</code> stays literal. Knowing which quote to reach for is a mark of real fluency.",
+    task:"Build a sentence from your variable: <b>echo \"$GREETING, student\"</b>.",
+    hint:"Run <b>echo \"$GREETING, student\"</b> — it prints <code>konnichiwa, student</code>. Now compare <b>echo '$GREETING'</b>, which prints the literal text.",
+    setup:seedGreeting,
+    check:(c)=> c.cmd.includes("$GREETING") && /konnichiwa/.test(c.out),
+    ok:"You wield quotes with intent. The subtle art is yours." },
+
+  { belt:"slate", title:"Survey the environment", sub:"env",
+    prose:"To see every variable at once, run <code>env</code>. It prints the shell's whole environment — the values every program you launch will inherit. When something misbehaves, this is where you look first.",
+    task:"List the entire environment with <b>env</b>.",
+    hint:"Run <b>env</b>. You'll see <code>USER</code>, <code>HOME</code>, <code>PATH</code>, and the <code>GREETING</code> you added.",
+    check:(c)=> base(c.cmd)==="env" && /HOME=/.test(c.out) && /USER=/.test(c.out),
+    ok:"You see the whole world your commands live in. Nothing is hidden." },
+
+  { belt:"red", title:"Reach across the network", sub:"curl",
+    prose:"Not all data lives on your disk. <code>curl</code> fetches the contents of a URL straight to your terminal — and because it writes to standard output, it pipes into anything. <code>curl -s</code> runs silently. Fetch a remote log and filter it in one motion. <em>(This dojo is sandboxed, so a small set of practice URLs is served offline — real <code>curl</code> reaches the live internet.)</em>",
+    task:"Fetch a remote log and keep only failures: <b>curl -s https://dojo.test/server.log | grep ERROR</b>.",
+    hint:"Run <b>curl -s https://dojo.test/server.log | grep ERROR</b>. Add <b>| wc -l</b> to count them. Try <b>curl -s https://dojo.test/scroll.txt</b> too.",
+    check:(c)=> c.cmd.includes("curl") && c.cmd.includes("grep") && /ERROR/.test(c.out),
+    ok:"Disk or network, it is all just a stream to you." },
+
+  { belt:"red", title:"Query structured data", sub:"jq",
+    prose:"The web speaks <strong>JSON</strong> — nested data, not flat lines — so <code>grep</code> and <code>cut</code> fall short. <code>jq</code> queries it with a path filter: <code>.key</code> drills in, <code>.array[]</code> spreads its elements onto separate lines, and <code>| length</code> counts. Fetch the dojo's belt list and pull it apart.",
+    task:"Fetch the belts JSON and extract the belts array: <b>curl -s https://api.dojo.test/belts.json | jq '.belts'</b>.",
+    hint:"Run <b>curl -s https://api.dojo.test/belts.json | jq '.belts'</b>. Then try <b>jq '.belts | length'</b> or <b>jq -r '.belts[0]'</b>.",
+    check:(c)=> c.cmd.includes("jq") && /white/.test(c.out) && /black/.test(c.out),
+    ok:"Nested data holds no fear for you. jq bends JSON to your will." },
+
+  { belt:"red", title:"Two names, one file", sub:"ln",
+    prose:"A <strong>link</strong> lets one file answer to more than one name. <code>ln -s TARGET NAME</code> creates a <em>symbolic</em> link — a signpost pointing at the target. In <code>ls -l</code> it shows as <code>name -&gt; target</code>, and reading it reads through to the original.",
+    task:"Create a symlink <b>latest.log</b> pointing at server.log: <b>ln -s server.log latest.log</b>.",
+    hint:"Run <b>ln -s server.log latest.log</b>, then <b>ls -l latest.log</b> to see the arrow, and <b>cat latest.log</b> to read through it.",
+    setup:seedLog,
+    check:()=>{ const n=H("latest.log"); return !!n && n.type==="link"; },
+    ok:"One file, many doorways. You understand links." },
+
+  { belt:"red", title:"Weigh your disk usage", sub:"du",
+    prose:"<code>du</code> (\"disk usage\") reports how much space files and folders occupy. <code>-s</code> gives a single summary total instead of every subdirectory; <code>-h</code> prints human-readable sizes (K, M) instead of raw blocks. Together, <code>du -sh</code> is the everyday way to ask \"how big is this?\"",
+    task:"Summarize the size of your home directory: <b>du -sh .</b>.",
+    hint:"Run <b>du -sh .</b> — one line: a size followed by the path.",
+    check:(c)=> base(c.cmd)==="du" && /\d/.test(c.out),
+    ok:"You know the weight of what you carry." },
+
+  { belt:"red", title:"Check the free space", sub:"df",
+    prose:"Where <code>du</code> weighs your files, <code>df</code> (\"disk free\") reports the whole filesystem — total size, used, and available. <code>df -h</code> shows friendly units. When a disk fills up, this is the first command you reach for.",
+    task:"Show filesystem usage in human units: <b>df -h</b>.",
+    hint:"Run <b>df -h</b>. Read the <code>Avail</code> and <code>Use%</code> columns.",
+    check:(c)=> base(c.cmd)==="df" && /dojofs|Filesystem/.test(c.out),
+    ok:"You keep an eye on the ground you stand on." },
+
+  { belt:"red", title:"See what's running", sub:"ps",
+    prose:"A machine is never idle — <strong>processes</strong> are always running. <code>ps</code> shows a snapshot of them. <code>ps aux</code> is the classic full view: every process, its owner, and how much CPU and memory it uses. Pipe it into <code>grep</code> to hunt for one.",
+    task:"List all running processes: <b>ps aux</b>.",
+    hint:"Run <b>ps aux</b>. Try <b>ps aux | grep dojo</b> to find a single process.",
+    check:(c)=> base(c.cmd)==="ps" && /dojo/.test(c.out),
+    ok:"You see the living machine, not just its files. The system holds no secrets now." },
+
+  { belt:"rose", title:"Send a task to the background", sub:"&",
+    prose:"A command normally holds your shell until it finishes. End the line with an ampersand <code>&</code> and it runs in the <strong>background</strong> instead — the shell prints <code>[job]&nbsp;pid</code> and hands control straight back to you. <code>sleep</code> just waits for N seconds, a perfect stand-in for a long-running task.",
+    task:"Start a background job: <b>sleep 30 &</b>.",
+    hint:"Type <b>sleep 30 &</b>. The shell prints something like <code>[1] 1743</code> and returns immediately — then try <b>jobs</b>.",
+    check:(c)=> c.cmd.includes("&") && runningJobs().length>0,
+    ok:"Your work runs while you keep moving. This is multitasking." },
+
+  { belt:"rose", title:"List your background jobs", sub:"jobs",
+    prose:"Once tasks run in the background, <code>jobs</code> shows them — each with a job number in <code>[brackets]</code>, its state (<em>Running</em>), and the command. That job number is how you refer back to it.",
+    task:"List your running jobs with <b>jobs</b>.",
+    hint:"Run <b>jobs</b>. Each line starts with a <code>[number]</code> — that's the handle you'll use to control it. (Try <b>ps</b> too; the job appears there.)",
+    setup:seedJob,
+    check:(c)=> base(c.cmd)==="jobs" && /Running/.test(c.out),
+    ok:"You keep account of everything you have set in motion." },
+
+  { belt:"rose", title:"Stop a process", sub:"kill",
+    prose:"To end a process you <code>kill</code> it — by process id (<code>kill 1743</code>) or by job number with a percent sign (<code>kill %1</code>). A stubborn process that ignores the polite request can be forced with <code>kill -9</code>. A background job is waiting — end it.",
+    task:"Kill the background job by its number: <b>kill %1</b>.",
+    hint:"Run <b>jobs</b> to see the number, then <b>kill %1</b> (or <b>kill &lt;pid&gt;</b>). Run <b>jobs</b> again — it reports <code>Terminated</code>.",
+    setup:seedJob,
+    check:(c)=> base(c.cmd)==="kill" && JOBS.some(j=>j.state==="Terminated"),
+    ok:"You command the living machine — starting and stopping its processes at will." },
+
+  { belt:"teal", title:"Shrink a file", sub:"gzip",
+    prose:"Storage and bandwidth are precious. <code>gzip</code> compresses a file in place: <code>gzip FILE</code> replaces <code>FILE</code> with a smaller <code>FILE.gz</code> and removes the original. To read it again you must <code>gunzip</code> it first — a compressed file is no longer plain text.",
+    task:"Compress the log with <b>gzip bulk.log</b>.",
+    hint:"Run <b>gzip bulk.log</b>, then <b>ls</b> — <code>bulk.log</code> is now <code>bulk.log.gz</code>. Use <b>gunzip bulk.log.gz</b> to restore it.",
+    setup:seedArchiveFiles,
+    check:()=>{ const n=H("bulk.log.gz"); return !!n && n.gz===true; },
+    ok:"You fold a file small. Storage bends to you." },
+
+  { belt:"teal", title:"Bundle a whole tree", sub:"tar -czf",
+    prose:"<code>tar</code> packs many files — even a whole directory tree — into one <strong>archive</strong>, the standard way to move projects around. <code>tar -c</code> creates, <code>-f</code> names the archive file, and <code>-z</code> also gzip-compresses it. Read the flags together: <code>-czf name.tar.gz</code>.",
+    task:"Pack the <b>site</b> folder into a compressed archive: <b>tar -czf site.tar.gz site</b>.",
+    hint:"Run <b>tar -czf site.tar.gz site</b>. The <code>c</code> creates, <code>z</code> compresses, <code>f</code> sets the filename.",
+    setup:seedArchiveFiles,
+    check:()=>{ const n=H("site.tar.gz"); return !!n && !!n.tar && n.gz===true && n.tar.some(e=>/^site\//.test(e.name)); },
+    ok:"A whole tree, sealed into one file. Ready to travel." },
+
+  { belt:"teal", title:"Peer inside without unpacking", sub:"tar -tzf",
+    prose:"Before extracting an archive, it is wise to see what it holds. <code>tar -t</code> <em>lists</em> the contents without unpacking anything — add <code>z</code> for gzipped archives and <code>f</code> for the filename: <code>tar -tzf name.tar.gz</code>.",
+    task:"List what's inside the archive: <b>tar -tzf site.tar.gz</b>.",
+    hint:"Run <b>tar -tzf site.tar.gz</b>. You'll see every path the archive contains, no files created.",
+    setup:seedSiteArchive,
+    check:(c)=> base(c.cmd)==="tar" && /site\//.test(c.out),
+    ok:"You inspect the sealed box before you open it. Careful and wise." },
+
+  { belt:"teal", title:"Unpack the archive", sub:"tar -xf",
+    prose:"To restore an archive's files, <code>tar -x</code> <em>extracts</em> them back onto the disk, rebuilding the original folders. A <code>release.tar</code> archive is waiting — unpack it and its <code>release/</code> folder reappears.",
+    task:"Extract the archive with <b>tar -xf release.tar</b>.",
+    hint:"Run <b>tar -xf release.tar</b>, then <b>ls release</b> and <b>cat release/notes.md</b> to see what emerged.",
+    setup:seedRelease,
+    check:(c)=> c.cmd.includes("tar") && /x/.test(c.cmd) && !!H("release/notes.md"),
+    ok:"What was sealed, you have opened. The vault answers to you." },
+
+  { belt:"indigo", title:"Repeat over a list", sub:"for",
+    prose:"When one command must run many times, you <strong>loop</strong>. The <code>for</code> loop walks a list, binding each item to a variable in turn: <code>for VAR in LIST; do COMMANDS; done</code>. Inside the body, <code>$VAR</code> holds the current item. This is where the shell becomes a real programming language.",
+    task:"Loop over three numbers and print each: <b>for i in 1 2 3; do echo $i; done</b>.",
+    hint:"Type it all on one line: <b>for i in 1 2 3; do echo $i; done</b>. The body runs once per item, with <code>$i</code> = 1, then 2, then 3.",
+    check:(c)=> /\bfor\b/.test(c.cmd) && /\bdo\b/.test(c.cmd) && /1/.test(c.out) && /2/.test(c.out) && /3/.test(c.out),
+    ok:"The loop turns one command into many. You have crossed into programming." },
+
+  { belt:"indigo", title:"Loop over files with a glob", sub:"for + *",
+    prose:"The list is often a set of files. A <strong>glob</strong> like <code>*.log</code> expands to every matching filename — so <code>for f in *.log</code> visits each log file in turn. The <code>*</code> matches any run of characters; <code>?</code> matches exactly one.",
+    task:"Print the name of every log file: <b>for f in *.log; do echo $f; done</b>.",
+    hint:"Run <b>for f in *.log; do echo $f; done</b>. The <code>*.log</code> becomes the list of matching files before the loop starts.",
+    setup:seedLoopFiles,
+    check:(c)=> /\bfor\b/.test(c.cmd) && (c.out.match(/\.log/g)||[]).length>=2,
+    ok:"You sweep across many files with a single loop. Real automation." },
+
+  { belt:"indigo", title:"Do real work each pass", sub:"for + cp",
+    prose:"A loop earns its keep when the body <em>acts</em>. Back up a whole set of files in one line: for each match, run a command that uses <code>$f</code>. Here every <code>.dat</code> file gets a <code>.bak</code> copy — the kind of chore loops were made for.",
+    task:"Back up every .dat file: <b>for f in *.dat; do cp $f $f.bak; done</b>.",
+    hint:"Run <b>for f in *.dat; do cp $f $f.bak; done</b>, then <b>ls</b> — each <code>report#.dat</code> now has a <code>report#.dat.bak</code> beside it.",
+    setup:seedLoopFiles,
+    check:()=> !!H("report1.dat.bak") && !!H("report2.dat.bak") && !!H("report3.dat.bak"),
+    ok:"One line, every file handled. This is the power the shell was built for." },
+
+  { belt:"cyan", title:"Branch on a condition", sub:"if / then",
+    prose:"<code>if</code> runs commands only when a condition holds. The condition is itself a command — usually <code>test</code> (or its alias <code>[ ]</code>) — and <code>if</code> checks its exit status: <code>if COND; then COMMANDS; fi</code>. Success means \"do it.\"",
+    task:"Act only if a file exists: <b>if test -f server.log; then echo \"found it\"; fi</b>.",
+    hint:"Run <b>if test -f server.log; then echo \"found it\"; fi</b>. Since server.log exists, the <code>then</code> branch runs.",
+    setup:seedLog,
+    check:(c)=> /\bif\b/.test(c.cmd) && /found it/.test(c.out),
+    ok:"Your commands now make decisions. The shell can think." },
+
+  { belt:"cyan", title:"The other path", sub:"if / else",
+    prose:"When the condition fails, <code>else</code> offers an alternative: <code>if COND; then A; else B; fi</code>. Exactly one branch runs — never both. This fork is at the heart of every program.",
+    task:"Fall back when a file is missing: <b>if test -f missing.conf; then echo found; else echo \"using defaults\"; fi</b>.",
+    hint:"Run <b>if test -f missing.conf; then echo found; else echo \"using defaults\"; fi</b>. The file is absent, so the <code>else</code> branch runs.",
+    check:(c)=> /\belse\b/.test(c.cmd) && /using defaults/.test(c.out),
+    ok:"You handle both outcomes. Robust thinking." },
+
+  { belt:"cyan", title:"Repeat while true", sub:"while",
+    prose:"A <code>while</code> loop repeats its body as long as a condition holds: <code>while COND; do COMMANDS; done</code>. Pair it with a counter and arithmetic <code>$(( … ))</code> to run a fixed number of times — just make sure the condition eventually turns false, or the loop never ends.",
+    task:"Count to three: <b>i=1; while [ $i -le 3 ]; do echo $i; i=$((i+1)); done</b>.",
+    hint:"Run <b>i=1; while [ $i -le 3 ]; do echo $i; i=$((i+1)); done</b>. Each pass prints <code>$i</code>, then <code>$((i+1))</code> bumps it up.",
+    check:(c)=> /\bwhile\b/.test(c.cmd) && /1/.test(c.out) && /2/.test(c.out) && /3/.test(c.out) && !/4/.test(c.out),
+    ok:"You command repetition with a condition. The last great control structure is yours." },
+
+  { belt:"steel", title:"Append, don't overwrite", sub:">>",
+    prose:"You've met <code>&gt;</code>, which redirects output to a file — but it <em>overwrites</em>. Its sibling <code>&gt;&gt;</code> <strong>appends</strong> instead, adding to the end and keeping what's already there. Perfect for growing a log.",
+    task:"Add a line to notes.txt without erasing it: <b>echo \"second entry\" &gt;&gt; notes.txt</b>.",
+    hint:"Run <b>echo \"second entry\" &gt;&gt; notes.txt</b>, then <b>cat notes.txt</b> — the original line is still there, with the new one below.",
+    setup:seedNotes,
+    check:()=>{ const n=H("notes.txt"); return !!n && /hello dojo/i.test(n.content) && /second entry/.test(n.content); },
+    ok:"You grow a file without destroying it. Careful hands." },
+
+  { belt:"steel", title:"Capture errors separately", sub:"2>",
+    prose:"A command has <em>two</em> output streams: normal output (stdout, stream 1) and errors (stderr, stream 2). Plain <code>&gt;</code> only redirects stdout. To capture errors, aim stream 2: <code>2&gt; file</code>. The error leaves your screen and lands in the file.",
+    task:"Send an error message to a file: <b>cat nope.txt 2&gt; errors.txt</b>.",
+    hint:"Run <b>cat nope.txt 2&gt; errors.txt</b>. Your screen stays clean; <b>cat errors.txt</b> shows the captured error.",
+    check:()=>{ const n=H("errors.txt"); return !!n && /No such file/.test(n.content); },
+    ok:"You separate the signal from the complaints. Two streams, two destinations." },
+
+  { belt:"steel", title:"Merge both streams", sub:"2>&1",
+    prose:"Sometimes you want <em>everything</em> — output and errors together — in one place. <code>2&gt;&amp;1</code> means \"send stream 2 wherever stream 1 is going.\" Place it after a <code>&gt;</code> and both streams pour into the same file.",
+    task:"Capture output and errors together: <b>ls README.txt nope.txt &gt; both.txt 2&gt;&amp;1</b>.",
+    hint:"Run <b>ls README.txt nope.txt &gt; both.txt 2&gt;&amp;1</b>, then <b>cat both.txt</b> — it holds the listing <em>and</em> the error.",
+    setup:seedReadme,
+    check:()=>{ const n=H("both.txt"); return !!n && /README/.test(n.content) && /No such file/.test(n.content); },
+    ok:"Both streams, one river. You control where every byte flows." },
+
+  { belt:"steel", title:"Read input from a file", sub:"<",
+    prose:"Redirection runs the other way too. <code>&lt; file</code> feeds a file into a command's <strong>standard input</strong>, as if you had typed its contents. Many tools read stdin when given no filename — so <code>wc -l &lt; server.log</code> counts the lines flowing in.",
+    task:"Feed a file into a command's input: <b>wc -l &lt; server.log</b>.",
+    hint:"Run <b>wc -l &lt; server.log</b>. Note there's no filename after wc — the file arrives through its input instead.",
+    setup:seedLog,
+    check:(c)=> c.cmd.includes("<") && /\d/.test(c.out),
+    ok:"Input, output, errors — every stream bends to your will. You have mastered redirection." },
+
+  { belt:"black", title:"The graduation kata", sub:"pipe + redirect",
+    prose:"A true kata combines everything. Count the <code>ERROR</code> lines in <code>server.log</code> and save that number into a report — in a single line. First make a directory <code>report</code>, then pipe <code>grep</code> into <code>wc -l</code> and <strong>redirect</strong> the result into <code>report/count.txt</code>.",
+    task:"Run <b>mkdir report</b>, then <b>grep ERROR server.log | wc -l &gt; report/count.txt</b>.",
+    hint:"Two steps. (1) <b>mkdir report</b>  (2) <b>grep ERROR server.log | wc -l &gt; report/count.txt</b>. Verify with <b>cat report/count.txt</b>.",
+    setup:seedLog,
+    check:()=>{ const n=H("report/count.txt"); if(!n||n.type!=="file")return false; const expected=String((seedLogText().match(/ERROR/g)||[]).length); return n.content.trim()===expected; },
+    ok:"You have combined making, searching, counting, and saving into one motion. The dojo bows to you." },
+
+  { belt:"black", title:"The master's pipeline", sub:"awk | sort | uniq",
+    prose:"The final kata: one flowing pipeline that answers a real question. <em>How often does each log level appear?</em> Extract the level with <code>awk</code>, <code>sort</code> so identical levels sit together, then <code>uniq -c</code> to count each run. This idiom lives in every shell master's muscle memory.",
+    task:"Tally each log level in one pipeline: <b>awk '{print $1}' server.log | sort | uniq -c</b>.",
+    hint:"Run <b>awk '{print $1}' server.log | sort | uniq -c</b>. Append <b>| sort -rn</b> to rank the levels by frequency.",
+    setup:seedLog,
+    check:(c)=> c.cmd.includes("awk")&&c.cmd.includes("sort")&&c.cmd.includes("uniq")&&/\d/.test(c.out),
+    ok:"awk to extract, sort to group, uniq to count — one breath, one motion. You are a shell master now." },
+];
+
+function seedLogText(){
+  return [
+    "INFO  2026-07-04 09:01 server started on port 8080",
+    "INFO  2026-07-04 09:02 healthcheck ok",
+    "ERROR 2026-07-04 09:05 database connection refused",
+    "WARN  2026-07-04 09:06 retrying connection (1/3)",
+    "ERROR 2026-07-04 09:07 database connection refused",
+    "INFO  2026-07-04 09:08 cache warmed",
+    "ERROR 2026-07-04 09:11 timeout talking to auth service",
+    "INFO  2026-07-04 09:12 request served in 42ms",
+    "WARN  2026-07-04 09:15 high memory usage 87%",
+    "INFO  2026-07-04 09:16 request served in 51ms",
+  ].join("\n")+"\n";
+}
+function seedLog(){ if(!H("server.log")) writeFile(HOME+"/server.log",seedLogText()); }
+function seedLogsTree(){
+  seedLog();
+  if(!H("logs")) mkdirp(HOME+"/logs");
+  if(!H("logs/app.log")) writeFile(HOME+"/logs/app.log","INFO  app started\nERROR app crashed on boot\nINFO  app recovered\n");
+  if(!H("logs/db.log")) writeFile(HOME+"/logs/db.log","INFO  db online\nWARN  slow query 1.2s\n");
+}
+function seedFruits(){ if(!H("fruits.txt")) writeFile(HOME+"/fruits.txt","banana\napple\ncherry\napricot\nblueberry\n"); }
+function seedVotes(){ if(!H("votes.txt")) writeFile(HOME+"/votes.txt","tea\ncoffee\ntea\nwater\ncoffee\ntea\nwater\ntea\ncoffee\n"); }
+function seedPeople(){ if(!H("people.csv")) writeFile(HOME+"/people.csv","name,age,city\nkenji,29,osaka\nmei,34,kyoto\nharu,41,nara\n"); }
+function seedScript(){ if(!H("script.sh")){ writeFile(HOME+"/script.sh","#!/bin/sh\necho \"hello from the dojo\"\n"); const n=H("script.sh"); if(n) n.mode=0o644; } }
+function seedArchiveFiles(){
+  if(!H("bulk.log")) writeFile(HOME+"/bulk.log", seedLogText()+seedLogText()+seedLogText());
+  if(!H("site")){
+    mkdirp(HOME+"/site");
+    writeFile(HOME+"/site/index.html","<h1>Terminal Dojo</h1>\n<p>Welcome.</p>\n");
+    writeFile(HOME+"/site/style.css","body{font-family:monospace;background:#111}\n");
+  }
+}
+function seedSiteArchive(){
+  seedArchiveFiles();
+  if(!H("site.tar.gz")){
+    const entries=[
+      {name:"site/",type:"dir"},
+      {name:"site/index.html",type:"file",content:"<h1>Terminal Dojo</h1>\n<p>Welcome.</p>\n"},
+      {name:"site/style.css",type:"file",content:"body{font-family:monospace;background:#111}\n"},
+    ];
+    const {par,name}=parentOf(resolve(HOME,"site.tar.gz"));
+    par.children[name]={type:"file",content:"",tar:entries,gz:true};
+  }
+}
+function seedJob(){ if(runningJobs().length===0) registerJob("sleep 300"); }
+function seedGreeting(){ if(ENV.GREETING==null) ENV.GREETING="konnichiwa"; }
+function seedNotes(){ if(!H("notes.txt")) writeFile(HOME+"/notes.txt","hello dojo\n"); }
+function seedReadme(){ if(!H("README.txt")) writeFile(HOME+"/README.txt","Welcome to the Terminal Dojo.\n"); }
+function seedLoopFiles(){
+  if(!H("access.log")) writeFile(HOME+"/access.log","GET /index 200\nGET /style.css 200\n");
+  if(!H("error.log")) writeFile(HOME+"/error.log","500 internal server error\n");
+  if(!H("report1.dat")) writeFile(HOME+"/report1.dat","alpha\n");
+  if(!H("report2.dat")) writeFile(HOME+"/report2.dat","beta\n");
+  if(!H("report3.dat")) writeFile(HOME+"/report3.dat","gamma\n");
+}
+function seedRelease(){
+  if(!H("release.tar")){
+    const entries=[
+      {name:"release/",type:"dir"},
+      {name:"release/notes.md",type:"file",content:"# Release v1.0\nThe first release of the dojo.\n"},
+      {name:"release/VERSION",type:"file",content:"1.0.0\n"},
+    ];
+    const {par,name}=parentOf(resolve(HOME,"release.tar"));
+    par.children[name]={type:"file",content:"",tar:entries,gz:false};
+  }
+}
+
+/* ===================================================================
+   STATE + PERSISTENCE
+   =================================================================== */
+const STORE_KEY="terminal-dojo-v1";
+let completed=new Set();
+let activeIdx=0;
+let history=[];
+let histPos=0;
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){ const d=JSON.parse(raw); completed=new Set(d.completed||[]); activeIdx=d.active||0; }
+  }catch(e){}
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY,JSON.stringify({completed:[...completed],active:activeIdx})); }catch(e){}
+}
+function isUnlocked(i){ return i===0 || completed.has(i-1) || completed.has(i); }
+function currentBeltKey(){
+  // highest belt reached = belt of the furthest completed lesson (or first)
+  let idx=-1;
+  for(let i=0;i<LESSONS.length;i++) if(completed.has(i)) idx=i;
+  const lessonIdx = idx>=0 ? Math.min(idx, LESSONS.length-1) : 0;
+  // rank = belt of next lesson to do, or black if all done
+  if(completed.size===LESSONS.length) return "black";
+  const firstIncomplete=LESSONS.findIndex((_,i)=>!completed.has(i));
+  return LESSONS[firstIncomplete<0?LESSONS.length-1:firstIncomplete].belt;
+}
+
+/* ===================================================================
+   TERMINAL DOM
+   =================================================================== */
+const termBody=document.getElementById("termBody");
+const inputLine=document.getElementById("inputLine");
+const cmdInput=document.getElementById("cmdInput");
+const ps1El=document.getElementById("ps1");
+
+function promptStr(){
+  const shown= cwd===HOME? "~" : cwd.startsWith(HOME+"/")? "~"+cwd.slice(HOME.length) : cwd;
+  return {user:"student@dojo",path:shown};
+}
+function renderPS1(){
+  const p=promptStr();
+  ps1El.innerHTML='<span class="l-prompt">'+p.user+'</span>:<span class="l-path">'+esc(p.path)+'</span>$&nbsp;';
+}
+function appendLine(html,cls){
+  const div=document.createElement("div");
+  div.className="line"+(cls?" "+cls:"");
+  div.innerHTML=html;
+  termBody.insertBefore(div,inputLine);
+}
+function appendEcho(cmd){
+  const p=promptStr();
+  appendLine('<span class="l-prompt">'+p.user+'</span>:<span class="l-path">'+esc(p.path)+'</span>$ <span class="l-cmd">'+esc(cmd)+'</span>');
+}
+function scrollDown(){ termBody.scrollTop=termBody.scrollHeight; }
+
+function handleCommand(raw){
+  const cmd=raw.trim();
+  appendEcho(raw);
+  if(cmd!=="") { history.push(cmd); }
+  histPos=history.length;
+  if(cmd===""){ renderPS1(); scrollDown(); return; }
+
+  const result=runLine(cmd);
+  if(result.clear){
+    // remove all lines except input
+    [...termBody.querySelectorAll(".line")].forEach(n=>n.remove());
+    renderPS1(); scrollDown(); afterCommand(cmd,result); return;
+  }
+  if(result.html && result.html.length){
+    appendLine(result.html.replace(/\n$/,""));
+  }
+  if(result.err && result.err.length){
+    appendLine('<span class="l-err">'+esc(result.err.replace(/\n$/,""))+'</span>');
+  }
+  renderPS1();
+  scrollDown();
+  afterCommand(cmd,result);
+}
+
+function afterCommand(cmd,result){
+  // build check context — out is stdout only (plain), so error text doesn't leak into checks
+  const ctx={ cmd, out: (result.plain!=null ? result.plain : stripTags(result.html||"")), cwd };
+  const lesson=LESSONS[activeIdx];
+  if(lesson && !completed.has(activeIdx)){
+    let pass=false;
+    try{ pass=lesson.check(ctx); }catch(e){ pass=false; }
+    if(pass) passLesson(activeIdx);
+  }
+}
+
+/* ===================================================================
+   LESSON FLOW
+   =================================================================== */
+function passLesson(i){
+  const wasBelt=currentBeltKey();
+  completed.add(i);
+  saveState();
+  celebrate();
+  const term=document.getElementById("term");
+  term.classList.remove("flash"); void term.offsetWidth; term.classList.add("flash");
+  renderBelts(); renderKataList(); renderBrief(); renderRank();
+  // auto-advance active pointer to next incomplete
+  const next=LESSONS.findIndex((_,k)=>!completed.has(k));
+  if(next>=0){ /* stay until user clicks, but mark banner */ }
+}
+
+function celebrate(){
+  const el=document.getElementById("celebrate");
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),1700);
+}
+
+function setActive(i){
+  if(!isUnlocked(i)) return;
+  activeIdx=i;
+  saveState();
+  runSetup(i);
+  renderKataList();
+  renderBrief();
+  cmdInput.focus();
+}
+function runSetup(i){ const l=LESSONS[i]; if(l&&l.setup){ try{l.setup();}catch(e){} } }
+
+/* ===================================================================
+   RENDER: belts, kata list, brief, rank
+   =================================================================== */
+const beltTrack=document.getElementById("beltTrack");
+const kataList=document.getElementById("kataList");
+const briefEl=document.getElementById("brief");
+
+function lessonsOfBelt(key){ return LESSONS.map((l,i)=>({l,i})).filter(x=>x.l.belt===key); }
+
+function renderBelts(){
+  const curKey=currentBeltKey();
+  const curIdx=beltIndex(curKey);
+  beltTrack.innerHTML="";
+  BELTS.forEach((b,bi)=>{
+    const items=lessonsOfBelt(b.key);
+    const done=items.filter(x=>completed.has(x.i)).length;
+    const reached= bi<=curIdx || done>0;
+    const row=document.createElement("div");
+    row.className="belt-row"+(reached?" reached":"")+(b.key===curKey?" current":"");
+    row.innerHTML=
+      '<span class="belt-chip" style="background:'+b.color+'"></span>'+
+      '<span class="belt-name">'+b.name+' belt</span>'+
+      '<span class="belt-prog">'+done+'/'+items.length+'</span>';
+    beltTrack.appendChild(row);
+  });
+}
+
+function renderKataList(){
+  kataList.innerHTML="";
+  let lastBelt=null;
+  LESSONS.forEach((l,i)=>{
+    if(l.belt!==lastBelt){
+      const h=document.createElement("h2");
+      h.textContent=(BELTS.find(b=>b.key===l.belt).name)+" belt";
+      kataList.appendChild(h);
+      lastBelt=l.belt;
+    }
+    const unlocked=isUnlocked(i);
+    const done=completed.has(i);
+    const el=document.createElement("div");
+    el.className="kata"+(i===activeIdx?" active":"")+(done?" done":"")+(unlocked?"":" locked");
+    el.setAttribute("role","button");
+    el.setAttribute("tabindex", unlocked?"0":"-1");
+    el.innerHTML=
+      '<span class="mark">'+(done?"✓":(unlocked?(i+1):"🔒"))+'</span>'+
+      '<span class="k-body"><span class="k-title">'+l.title+'</span>'+
+      '<span class="k-sub">'+esc(l.sub)+'</span></span>';
+    if(unlocked){
+      el.addEventListener("click",()=>setActive(i));
+      el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setActive(i);}});
+    }
+    kataList.appendChild(el);
+  });
+}
+
+function renderBrief(){
+  const l=LESSONS[activeIdx];
+  const b=BELTS.find(x=>x.key===l.belt);
+  const done=completed.has(activeIdx);
+  const allDone=completed.size===LESSONS.length;
+  const txtColor = l.belt==="white"||l.belt==="yellow"?"#20242B":"#fff";
+  let html="";
+  html+='<div class="b-head">';
+  html+='<span class="belt-tag" style="background:'+b.color+';color:'+txtColor+'">'+b.name+' belt · '+esc(l.sub)+'</span>';
+  html+='</div>';
+  html+='<h2>'+l.title+'</h2>';
+  html+='<p class="prose">'+l.prose+'</p>';
+  html+='<div class="task"><span class="t-icon">▸</span><div class="t-body">'+
+        '<div class="t-lbl">Your kata</div><div class="t-text">'+l.task+'</div></div></div>';
+  html+='<div class="brief-actions">'+
+        '<button class="btn hint" id="hintBtn">Show a hint</button>'+
+        '<button class="btn" id="resetLessonBtn">Reset this kata</button>';
+  const next=activeIdx+1;
+  if(done && next<LESSONS.length){
+    html+='<button class="btn primary" id="nextBtn">Next kata →</button>';
+  }
+  html+='</div>';
+  html+='<div class="hint-box" id="hintBox"><b>Hint · </b>'+l.hint+'</div>';
+  if(done){
+    html+='<div class="completed-banner show"><span style="font-size:20px">🥋</span>'+
+          '<span class="cb-txt"><b>Kata passed.</b> '+l.ok+
+          (allDone?'<div class="final-note">All belts earned. You have walked the full path — from knowing where you stand to combining every technique in one motion. The shell is yours now.</div>':'')+
+          '</span></div>';
+  }
+  briefEl.innerHTML=html;
+
+  const hb=document.getElementById("hintBtn");
+  if(hb) hb.addEventListener("click",()=>{document.getElementById("hintBox").classList.toggle("show");});
+  const rl=document.getElementById("resetLessonBtn");
+  if(rl) rl.addEventListener("click",()=>resetLesson());
+  const nb=document.getElementById("nextBtn");
+  if(nb) nb.addEventListener("click",()=>setActive(activeIdx+1));
+}
+
+function renderRank(){
+  const key=currentBeltKey();
+  const b=BELTS.find(x=>x.key===key);
+  document.getElementById("rankName").textContent=b.name+" belt";
+  document.getElementById("rankSwatch").style.background=b.color;
+}
+
+function resetLesson(){
+  // re-run setup for the lesson to restore its starting files, and (if it was a create/delete lesson) allow retry
+  const l=LESSONS[activeIdx];
+  // undo completion so learner can redo
+  completed.delete(activeIdx);
+  // restore files this lesson may have removed/added
+  restoreLessonFiles(activeIdx);
+  saveState();
+  renderBelts(); renderKataList(); renderBrief(); renderRank();
+  appendLine('<span class="l-dim">— kata reset — starting files restored —</span>');
+  scrollDown();
+}
+function restoreLessonFiles(i){
+  // simplest robust approach: reseed base + re-run setups of all lessons up to needed
+  // but preserve user's created dirs. We re-run this lesson's setup only.
+  const l=LESSONS[i];
+  if(l.setup){ try{l.setup();}catch(e){} }
+  // special cases where lesson deletes/renames source files:
+  if(l.sub==="mv"){ if(!H("draft.txt")&&!H("final.txt")) writeFile(HOME+"/draft.txt","first attempt\n"); }
+  if(l.sub==="rm"){ if(!H("temp.log")) writeFile(HOME+"/temp.log","junk\n"); }
+}
+
+/* ===================================================================
+   INPUT HANDLING
+   =================================================================== */
+cmdInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const v=cmdInput.value;
+    cmdInput.value="";
+    handleCommand(v);
+  } else if(e.key==="ArrowUp"){
+    e.preventDefault();
+    if(history.length){ histPos=Math.max(0,histPos-1); cmdInput.value=history[histPos]||""; moveCaretEnd(); }
+  } else if(e.key==="ArrowDown"){
+    e.preventDefault();
+    if(histPos<history.length){ histPos++; cmdInput.value=history[histPos]||""; moveCaretEnd(); }
+  } else if(e.key==="Tab"){
+    e.preventDefault();
+    tabComplete();
+  } else if(e.key==="l"&&e.ctrlKey){
+    e.preventDefault();
+    [...termBody.querySelectorAll(".line")].forEach(n=>n.remove());
+    renderPS1();
+  }
+});
+function moveCaretEnd(){ const v=cmdInput.value; cmdInput.setSelectionRange(v.length,v.length); }
+function tabComplete(){
+  const val=cmdInput.value;
+  const toks=val.split(/\s+/);
+  const last=toks[toks.length-1];
+  let candidates=[];
+  if(toks.length<=1){
+    candidates=Object.keys(CMDS).filter(c=>c.startsWith(last));
+  } else {
+    const dir=getNode(cwd);
+    if(dir&&dir.type==="dir"){
+      candidates=Object.keys(dir.children).filter(n=>n.startsWith(last));
+    }
+  }
+  if(candidates.length===1){
+    toks[toks.length-1]=candidates[0]+(getNode(resolve(cwd,candidates[0]))&&getNode(resolve(cwd,candidates[0])).type==="dir"&&toks.length>1?"/":"");
+    cmdInput.value=toks.join(" ");
+  } else if(candidates.length>1){
+    appendEcho(val);
+    appendLine('<span class="l-dim">'+candidates.map(esc).join("   ")+'</span>');
+    scrollDown();
+  }
+}
+
+// clicking the terminal focuses input
+termBody.addEventListener("click",()=>{ if(!window.getSelection().toString()) cmdInput.focus(); });
+
+/* ===================================================================
+   BOOT
+   =================================================================== */
+function bootSequence(){
+  const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const lines=[
+    {h:'<span class="l-ok">Terminal Dojo</span> <span class="l-dim">v1.0 — training shell</span>'},
+    {h:'<span class="l-dim">A safe, in-memory sandbox. Nothing here can harm a real machine.</span>'},
+    {h:'<span class="l-dim">Type</span> help <span class="l-dim">to see every command, or</span> man &lt;cmd&gt; <span class="l-dim">for details.</span>'},
+    {h:'<span class="l-amber">Follow the kata in the left scroll. Bow in, and begin.</span>'},
+    {h:'&nbsp;'},
+  ];
+  let i=0;
+  const emit=()=>{
+    if(i<lines.length){ appendLine(lines[i].h); i++; scrollDown(); setTimeout(emit,reduce?0:230); }
+    else { renderPS1(); cmdInput.focus(); }
+  };
+  emit();
+}
+
+function initTheme(){
+  const btn=document.getElementById("themeBtn");
+  btn.addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const sysDark=window.matchMedia("(prefers-color-scheme:dark)").matches;
+    let next;
+    if(cur){ next= cur==="dark"?"light":"dark"; }
+    else { next= sysDark?"light":"dark"; }
+    document.documentElement.setAttribute("data-theme",next);
+    try{ localStorage.setItem("terminal-dojo-theme",next); }catch(e){}
+  });
+  try{ const t=localStorage.getItem("terminal-dojo-theme"); if(t) document.documentElement.setAttribute("data-theme",t); }catch(e){}
+}
+
+function initResetAll(){
+  document.getElementById("resetAllBtn").addEventListener("click",()=>{
+    completed=new Set(); activeIdx=0; cwd=HOME; history=[]; histPos=0;
+    seedFS();
+    // seed all lesson files so exploration works from anywhere
+    LESSONS.forEach(l=>{ if(l.setup){try{l.setup();}catch(e){}} });
+    try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+    [...termBody.querySelectorAll(".line")].forEach(n=>n.remove());
+    renderBelts(); renderKataList(); renderBrief(); renderRank();
+    appendLine('<span class="l-dim">— all progress reset — the dojo is swept clean —</span>');
+    renderPS1(); scrollDown(); cmdInput.focus();
+  });
+}
+
+function init(){
+  seedFS();
+  loadState();
+  // ensure files for all lessons up to and including active exist
+  LESSONS.forEach(l=>{ if(l.setup){try{l.setup();}catch(e){}} });
+  // recreate mv/rm starting states only if that lesson not yet completed
+  if(!completed.has(LESSONS.findIndex(l=>l.sub==="mv"))){ if(!H("final.txt")&&!H("draft.txt")) writeFile(HOME+"/draft.txt","first attempt\n"); }
+  if(!completed.has(LESSONS.findIndex(l=>l.sub==="rm"))){ if(!H("temp.log")) writeFile(HOME+"/temp.log","junk\n"); }
+
+  initTheme();
+  initResetAll();
+  renderBelts(); renderKataList(); renderBrief(); renderRank();
+  bootSequence();
+}
+init();
+
+})();
+</script>
+
+</body>
+</html>
